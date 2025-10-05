@@ -23,7 +23,7 @@ load_dotenv()
 
 def create_test_data():
     """Creates comprehensive test data for all parsers."""
-    test_dir = Path("test_data")
+    test_dir = Path("examples/test_data")
     test_dir.mkdir(exist_ok=True)
 
     # 1. Create JSON ETL config
@@ -112,7 +112,7 @@ def test_agent_comprehensive():
     print("=" * 70)
 
     # Create test data
-    test_dir = create_test_data()
+    test_dir = create_examples/test_data()
 
     # Create agent and load documents from multiple sources
     print("\n📚 Loading documents from multiple formats...")
@@ -196,7 +196,7 @@ def test_agent_comprehensive():
     ]
 
     results = []
-    output_dir = Path("output")
+    output_dir = Path("examples/output")
     output_dir.mkdir(exist_ok=True)
 
     for idx, test_case in enumerate(test_queries, 1):
@@ -252,10 +252,10 @@ def test_agent_comprehensive():
     print("=" * 70)
 
     expected_files = [
-        "output/graph_export.json",
-        "output/lineage_report.csv",
-        "output/analysis.xlsx",
-        "output/converted_cobol.py",
+        "examples/output/graph_export.json",
+        "examples/output/lineage_report.csv",
+        "examples/output/analysis.xlsx",
+        "examples/output/converted_cobol.py",
     ]
 
     for file_path in expected_files:
