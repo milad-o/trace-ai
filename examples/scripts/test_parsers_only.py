@@ -12,8 +12,8 @@ from traceai.graph.queries import GraphQueries
 
 def create_test_data():
     """Creates test data for all parsers."""
-    test_dir = Path("examples/test_data")
-    test_dir.mkdir(exist_ok=True)
+    test_dir = Path("../outputs/test_data")
+    test_dir.mkdir(parents=True, exist_ok=True)
 
     # 1. JSON ETL config
     json_config = {
@@ -66,11 +66,11 @@ def test_all_parsers():
 
     # Load SSIS
     print("  Loading SSIS packages...")
-    agent.load_documents("examples/sample_packages")
+    agent.load_documents("../inputs/ssis")
 
     # Load COBOL/JCL
     print("  Loading COBOL/JCL...")
-    agent.load_documents("examples/sample_mainframe", pattern=["*.cbl", "*.jcl"])
+    agent.load_documents("../inputs", pattern=["*.cbl", "*.jcl"])
 
     # Load JSON/CSV/Excel
     print("  Loading JSON/CSV/Excel...")
@@ -132,7 +132,7 @@ def test_all_parsers():
     print("TESTING CODE GENERATION TOOLS")
     print("=" * 70)
 
-    output_dir = Path("examples/output")
+    output_dir = Path("../outputs")
     output_dir.mkdir(exist_ok=True)
 
     # Test JSON export
@@ -140,7 +140,7 @@ def test_all_parsers():
     from traceai.tools.code_generation_tools import GenerateJSONTool
 
     json_tool = GenerateJSONTool(queries=queries)
-    result = json_tool._run(output_path="examples/output/test_export.json", include_metadata=True)
+    result = json_tool._run(output_path="../outputs/test_export.json", include_metadata=True)
     print(f"   {result}")
 
     # Test CSV export
@@ -148,7 +148,7 @@ def test_all_parsers():
     from traceai.tools.code_generation_tools import GenerateCSVTool
 
     csv_tool = GenerateCSVTool(queries=queries)
-    result = csv_tool._run(output_path="examples/output/test_lineage.csv", export_type="lineage")
+    result = csv_tool._run(output_path="../outputs/test_lineage.csv", export_type="lineage")
     print(f"   {result}")
 
     # Test Excel export
@@ -157,7 +157,7 @@ def test_all_parsers():
 
     excel_tool = GenerateExcelTool(queries=queries)
     result = excel_tool._run(
-        output_path="examples/output/test_analysis.xlsx", include_sheets=["summary", "nodes"]
+        output_path="../outputs/test_analysis.xlsx", include_sheets=["summary", "nodes"]
     )
     print(f"   {result}")
 
@@ -178,7 +178,7 @@ def test_all_parsers():
 
     if cobol_node:
         result = python_tool._run(
-            node_id=cobol_node, output_path="examples/output/test_converted.py", style="script"
+            node_id=cobol_node, output_path="../outputs/test_converted.py", style="script"
         )
         print(f"   {result[:200]}...")
     else:
@@ -190,10 +190,10 @@ def test_all_parsers():
     print("=" * 70)
 
     for file_path in [
-        "examples/output/test_export.json",
-        "examples/output/test_lineage.csv",
-        "examples/output/test_analysis.xlsx",
-        "examples/output/test_converted.py",
+        "../outputs/test_export.json",
+        "../outputs/test_lineage.csv",
+        "../outputs/test_analysis.xlsx",
+        "../outputs/test_converted.py",
     ]:
         if Path(file_path).exists():
             size = Path(file_path).stat().st_size
@@ -211,7 +211,7 @@ def test_all_parsers():
 
     files_created = sum(
         1
-        for f in ["examples/output/test_export.json", "examples/output/test_lineage.csv", "examples/output/test_analysis.xlsx"]
+        for f in ["../outputs/test_export.json", "../outputs/test_lineage.csv", "../outputs/test_analysis.xlsx"]
         if Path(f).exists()
     )
     print(f"Code Gen Tools: {files_created}/3 working")

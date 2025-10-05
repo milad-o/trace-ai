@@ -1,0 +1,3 @@
+source_table,target_table,transformation
+raw_sales,dim_sales,Aggregate
+raw_customers,dim_customers,Deduplicate

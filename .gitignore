@@ -39,9 +39,15 @@ Thumbs.db
 data/
 chromadb/
 
-# Test/output directories (only in examples folder)
+# Generated outputs (gitignored, created by scripts)
+examples/outputs/
+
+# Legacy folders (should be removed)
 examples/test_data/
 examples/output/
+examples/sample_packages/
+examples/sample_mainframe/
+examples/sample_databases/
 
 # Jupyter
 .ipynb_checkpoints/

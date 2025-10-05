@@ -1,0 +1,4 @@
+source_table,target_table,transformation
+raw.sales,staging.sales,Validate and clean
+raw.customers,staging.customers,Deduplicate
+raw.products,staging.products,Normalize

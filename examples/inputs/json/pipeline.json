@@ -1,0 +1,1 @@
+{"name": "SalesDataPipeline", "jobs": [{"id": "extract", "name": "Extract", "depends_on": []}, {"id": "transform", "name": "Transform", "depends_on": ["extract"]}]}

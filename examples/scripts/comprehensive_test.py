@@ -23,8 +23,8 @@ load_dotenv()
 
 def create_test_data():
     """Creates comprehensive test data for all parsers."""
-    test_dir = Path("examples/test_data")
-    test_dir.mkdir(exist_ok=True)
+    test_dir = Path("../outputs/test_data")
+    test_dir.mkdir(parents=True, exist_ok=True)
 
     # 1. Create JSON ETL config
     json_config = {
@@ -99,8 +99,8 @@ def create_test_data():
     print(f"✓ Created Excel workbook: {excel_file}")
 
     # Also use existing COBOL/JCL samples
-    print(f"✓ Using existing COBOL files: examples/sample_mainframe/")
-    print(f"✓ Using existing SSIS files: examples/sample_packages/")
+    print(f"✓ Using existing COBOL files: ../inputs/")
+    print(f"✓ Using existing SSIS files: ../inputs/ssis/")
 
     return test_dir
 
@@ -112,19 +112,19 @@ def test_agent_comprehensive():
     print("=" * 70)
 
     # Create test data
-    test_dir = create_examples/test_data()
+    test_dir = create_test_data()
 
     # Create agent and load documents from multiple sources
     print("\n📚 Loading documents from multiple formats...")
     agent = create_enterprise_agent(
-        documents_dir="examples/sample_packages",  # Start with SSIS
+        documents_dir="../inputs/ssis",  # Start with SSIS
         model_provider="openai",
         model_name="gpt-4o",
     )
 
     # Load additional documents
     print("  Loading COBOL/JCL files...")
-    agent.load_documents("examples/sample_mainframe", pattern=["**/*.cbl", "**/*.jcl"])
+    agent.load_documents("../inputs", pattern=["**/*.cbl", "**/*.jcl"])
 
     print("  Loading JSON/CSV/Excel files...")
     agent.load_documents(str(test_dir), pattern=["*.json", "*.csv", "*.xlsx"])
@@ -196,7 +196,7 @@ def test_agent_comprehensive():
     ]
 
     results = []
-    output_dir = Path("examples/output")
+    output_dir = Path("../outputs")
     output_dir.mkdir(exist_ok=True)
 
     for idx, test_case in enumerate(test_queries, 1):
@@ -252,10 +252,10 @@ def test_agent_comprehensive():
     print("=" * 70)
 
     expected_files = [
-        "examples/output/graph_export.json",
-        "examples/output/lineage_report.csv",
-        "examples/output/analysis.xlsx",
-        "examples/output/converted_cobol.py",
+        "../outputs/graph_export.json",
+        "../outputs/lineage_report.csv",
+        "../outputs/analysis.xlsx",
+        "../outputs/converted_cobol.py",
     ]
 
     for file_path in expected_files:
