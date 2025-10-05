@@ -2,8 +2,8 @@
 
 An AI-powered ETL analysis tool that helps data teams understand complex data transformations, trace data lineage, and analyze the impact of changes across ETL processes.
 
-[![Tests](https://img.shields.io/badge/tests-80%20passing-brightgreen)](tests/)
-[![Coverage](https://img.shields.io/badge/coverage-70%25-yellow)](tests/)
+[![Tests](https://img.shields.io/badge/tests-207%20total-brightgreen)](tests/)
+[![Docs](https://img.shields.io/badge/docs-complete-blue)](docs/)
 [![Python](https://img.shields.io/badge/python-3.12-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
@@ -82,8 +82,8 @@ python examples/quick_demo.py
 ### Graph-Only Mode (No API Key)
 
 ```python
-from enterprise_assistant.agents import EnterpriseAgent
-from enterprise_assistant.graph.queries import GraphQueries
+from traceai.agents import EnterpriseAgent
+from traceai.graph.queries import GraphQueries
 
 # Initialize agent (no API key needed)
 agent = EnterpriseAgent(model_provider="anthropic")
@@ -111,7 +111,7 @@ export OPENAI_API_KEY=your_key_here
 ```
 
 ```python
-from enterprise_assistant.agents import create_enterprise_agent
+from traceai.agents import create_enterprise_agent
 
 # Initialize AI-powered agent
 agent = create_enterprise_agent(
@@ -310,12 +310,19 @@ uv run pytest tests/test_real_scenarios.py -v
 
 ## 📚 Documentation
 
-- [Realistic Scenarios Guide](docs/REALISTIC_SCENARIOS.md) - 7 real-world use cases
+### User Guides
+- [API Reference](docs/API_REFERENCE.md) - **Complete API documentation for all components**
+- [Testing Guide](docs/TESTING.md) - **207 tests covering all functionality**
+- [Realistic Scenarios](docs/REALISTIC_SCENARIOS.md) - 7 real-world use cases
+
+### Architecture & Design
+- [Memory Architecture](docs/MEMORY_ARCHITECTURE.md) - SQLite + Vector stores
+- [Workboard](docs/WORKBOARD.md) - Project roadmap
+
+### Development Docs
 - [Phase 9 Summary](docs/PHASE_9_SUMMARY.md) - Memory architecture
 - [Phase 10 Summary](docs/PHASE_10_SUMMARY.md) - LangChain cleanup
 - [Phase 11 Summary](docs/PHASE_11_SUMMARY.md) - Realistic scenarios
-- [Memory Architecture](docs/MEMORY_ARCHITECTURE.md) - SQLite + Vector stores
-- [Workboard](docs/WORKBOARD.md) - Project roadmap
 
 ---
 
