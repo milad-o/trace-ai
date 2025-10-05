@@ -22,6 +22,7 @@ class DocumentType(str, Enum):
     JSON_CONFIG = "json_config"
     PYTHON_SCRIPT = "python_script"
     SQL_SCRIPT = "sql_script"
+    CSV_METADATA = "csv_metadata"
 
 
 @dataclass

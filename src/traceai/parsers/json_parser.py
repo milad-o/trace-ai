@@ -27,10 +27,12 @@ from traceai.parsers.base import (
 class JSONParser(BaseParser):
     """Parser for JSON configuration files."""
 
+    @property
     def supported_extensions(self) -> list[str]:
         """Returns list of supported file extensions."""
         return [".json", ".jsonc"]
 
+    @property
     def document_type(self) -> DocumentType:
         """Returns the document type this parser handles."""
         return DocumentType.JSON_CONFIG

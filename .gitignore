@@ -43,3 +43,4 @@ chromadb/
 .ipynb_checkpoints/
 *.ipynb
 dev_docs/
+output/

@@ -28,13 +28,15 @@ from traceai.parsers.base import (
 class CSVParser(BaseParser):
     """Parser for CSV files containing ETL metadata."""
 
+    @property
     def supported_extensions(self) -> list[str]:
         """Returns list of supported file extensions."""
         return [".csv", ".tsv"]
 
+    @property
     def document_type(self) -> DocumentType:
         """Returns the document type this parser handles."""
-        return DocumentType.JSON_CONFIG  # Reuse for now, could add CSV_METADATA
+        return DocumentType.CSV_METADATA
 
     def validate(self, file_path: Path) -> bool:
         """Validates if the file is a valid CSV."""

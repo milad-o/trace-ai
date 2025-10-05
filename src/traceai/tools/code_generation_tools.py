@@ -307,7 +307,7 @@ class GenerateExcelTool(BaseTool):
     def _add_summary_sheet(self, wb: Workbook) -> None:
         """Adds summary sheet with graph statistics."""
         ws = wb.create_sheet("Summary")
-        stats = self.queries.get_graph_statistics()
+        stats = self.queries.get_graph_stats()
 
         # Add header
         ws["A1"] = "Knowledge Graph Summary"

@@ -29,10 +29,12 @@ from traceai.parsers.base import (
 class ExcelParser(BaseParser):
     """Parser for Excel workbooks."""
 
+    @property
     def supported_extensions(self) -> list[str]:
         """Returns list of supported file extensions."""
         return [".xlsx", ".xlsm"]
 
+    @property
     def document_type(self) -> DocumentType:
         """Returns the document type this parser handles."""
         return DocumentType.EXCEL_WORKBOOK
