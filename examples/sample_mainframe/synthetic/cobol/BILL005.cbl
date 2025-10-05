@@ -1,0 +1,113 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. BILL005.
+      *****************************************************************
+      * Program: Dunning Letter Generator
+      * Description: Processes BILLING.INPUT.MASTER, BILLING.INPUT.TRANS and produces
+      *              BILLING.OUTPUT.BILL005, BILLING.REPORT.BILL005
+      * Author: SYSTEM GENERATED
+      * Date: 2024
+      *****************************************************************
+
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+           SELECT BILLING-INPUT-MASTER-FILE
+               ASSIGN TO BILLING.INPUT.MASTER
+               ORGANIZATION IS SEQUENTIAL.
+           SELECT BILLING-INPUT-TRANS-FILE
+               ASSIGN TO BILLING.INPUT.TRANS
+               ORGANIZATION IS SEQUENTIAL.
+           SELECT BILLING-OUTPUT-BILL005-FILE
+               ASSIGN TO BILLING.OUTPUT.BILL005
+               ORGANIZATION IS SEQUENTIAL.
+           SELECT BILLING-REPORT-BILL005-FILE
+               ASSIGN TO BILLING.REPORT.BILL005
+               ORGANIZATION IS SEQUENTIAL.
+
+       DATA DIVISION.
+       FILE SECTION.
+       FD  BILLING-INPUT-MASTER-FILE.
+       01  BILLING-INPUT-MASTER-RECORD.
+           05  BILLING-INPUT-MASTER-KEY           PIC X(10).
+           05  BILLING-INPUT-MASTER-DATA          PIC X(100).
+           05  BILLING-INPUT-MASTER-AMOUNT        PIC 9(7)V99.
+           05  BILLING-INPUT-MASTER-DATE          PIC X(10).
+           05  FILLER                  PIC X(60).
+       FD  BILLING-INPUT-TRANS-FILE.
+       01  BILLING-INPUT-TRANS-RECORD.
+           05  BILLING-INPUT-TRANS-KEY           PIC X(10).
+           05  BILLING-INPUT-TRANS-DATA          PIC X(100).
+           05  BILLING-INPUT-TRANS-AMOUNT        PIC 9(7)V99.
+           05  BILLING-INPUT-TRANS-DATE          PIC X(10).
+           05  FILLER                  PIC X(60).
+       FD  BILLING-OUTPUT-BILL005-FILE.
+       01  BILLING-OUTPUT-BILL005-RECORD.
+           05  BILLING-OUTPUT-BILL005-KEY           PIC X(10).
+           05  BILLING-OUTPUT-BILL005-DATA          PIC X(100).
+           05  BILLING-OUTPUT-BILL005-AMOUNT        PIC 9(7)V99.
+           05  BILLING-OUTPUT-BILL005-STATUS        PIC X(10).
+           05  FILLER                  PIC X(60).
+       FD  BILLING-REPORT-BILL005-FILE.
+       01  BILLING-REPORT-BILL005-RECORD.
+           05  BILLING-REPORT-BILL005-KEY           PIC X(10).
+           05  BILLING-REPORT-BILL005-DATA          PIC X(100).
+           05  BILLING-REPORT-BILL005-AMOUNT        PIC 9(7)V99.
+           05  BILLING-REPORT-BILL005-STATUS        PIC X(10).
+           05  FILLER                  PIC X(60).
+
+       WORKING-STORAGE SECTION.
+       01  WS-EOF-FLAG             PIC X VALUE 'N'.
+           88  END-OF-FILE         VALUE 'Y'.
+       01  WS-RECORD-COUNT         PIC 9(7) VALUE 0.
+       01  WS-ERROR-COUNT          PIC 9(5) VALUE 0.
+       01  WS-TOTAL-AMOUNT         PIC 9(9)V99 VALUE 0.
+
+       PROCEDURE DIVISION.
+
+       0000-MAIN.
+           PERFORM 1000-INITIALIZE
+           PERFORM 2000-PROCESS-RECORDS
+           PERFORM 3000-FINALIZE
+           STOP RUN.
+
+       1000-INITIALIZE.
+           DISPLAY '*** BILL005 STARTED ***'
+           OPEN INPUT BILLING-INPUT-MASTER-FILE
+           OPEN INPUT BILLING-INPUT-TRANS-FILE
+           OPEN OUTPUT BILLING-OUTPUT-BILL005-FILE
+           OPEN OUTPUT BILLING-REPORT-BILL005-FILE
+           MOVE 'N' TO WS-EOF-FLAG
+           MOVE 0 TO WS-RECORD-COUNT
+           MOVE 0 TO WS-ERROR-COUNT.
+
+       2000-PROCESS-RECORDS.
+           PERFORM UNTIL END-OF-FILE
+               READ BILLING-INPUT-MASTER-FILE
+                   AT END
+                       MOVE 'Y' TO WS-EOF-FLAG
+                   NOT AT END
+                       PERFORM 2100-VALIDATE-RECORD
+                       PERFORM 2200-TRANSFORM-RECORD
+                       WRITE BILLING-OUTPUT-BILL005-RECORD
+                       ADD 1 TO WS-RECORD-COUNT
+               END-READ
+           END-PERFORM.
+           CALL "UTIL005" USING BILLING-INPUT-MASTER-RECORD
+
+       2100-VALIDATE-RECORD.
+           IF BILLING-INPUT-MASTER-KEY = SPACES
+               ADD 1 TO WS-ERROR-COUNT
+           END-IF.
+
+       2200-TRANSFORM-RECORD.
+           ADD BILLING-INPUT-MASTER-AMOUNT TO WS-TOTAL-AMOUNT.
+
+       3000-FINALIZE.
+           CLOSE BILLING-INPUT-MASTER-FILE
+           CLOSE BILLING-INPUT-TRANS-FILE
+           CLOSE BILLING-OUTPUT-BILL005-FILE
+           CLOSE BILLING-REPORT-BILL005-FILE
+           DISPLAY '*** BILL005 COMPLETED ***'
+           DISPLAY 'RECORDS PROCESSED: ' WS-RECORD-COUNT
+           DISPLAY 'ERRORS FOUND: ' WS-ERROR-COUNT
+           DISPLAY 'TOTAL AMOUNT: ' WS-TOTAL-AMOUNT.

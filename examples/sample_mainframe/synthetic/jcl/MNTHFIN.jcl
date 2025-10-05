@@ -1,0 +1,19 @@
+//{job_name} JOB (ACCT),'BATCH JOB',
+//             CLASS=A,
+//             MSGCLASS=X,
+//             MSGLEVEL=(1,1),
+//             NOTIFY=&SYSUID
+//*
+//* Job: MNTHFIN
+//* Description: Multi-step batch processing job
+//* Generated: 2024
+//*
+//STEP001  EXEC PGM=FIN006
+//FINANCEI DD DSN=FINANCE.INPUT.MASTER,DISP=SHR
+//FINANCEI DD DSN=FINANCE.INPUT.TRANS,DISP=SHR
+//FINANCEO DD DSN=FINANCE.OUTPUT.FIN006,DISP=(NEW,CATLG,DELETE),
+//         SPACE=(TRK,(10,5),RLSE)
+//FINANCER DD DSN=FINANCE.REPORT.FIN006,DISP=(NEW,CATLG,DELETE),
+//         SPACE=(TRK,(10,5),RLSE)
+//SYSOUT   DD SYSOUT=*
+//

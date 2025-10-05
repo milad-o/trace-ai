@@ -1,0 +1,103 @@
+[project]
+name = "trace-ai"
+version = "0.1.0"
+description = "TraceAI - AI-powered ETL data lineage and transformation analysis tool using LangChain, LangGraph, and NetworkX"
+authors = [
+    {name = "Milad Olad"}
+]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    # LangChain (using stable versions until 1.0 is fully released)
+    "langchain>=0.3.0",
+    "langchain-core>=0.3.0",
+    "langchain-community>=0.3.0",
+    # LangChain integrations
+    "langchain-anthropic>=0.3.0",
+    "langchain-openai>=0.3.0",
+    # LangGraph v1.0 and Deep Agents
+    "langgraph>=0.2.62",
+    "langgraph-checkpoint>=2.0.10",
+    "deepagents>=0.0.10",
+    # Graph library (pure Python, no external dependencies)
+    "networkx>=3.5",
+    # Vector store
+    "chromadb>=0.5.0",
+    # Embeddings
+    "sentence-transformers>=3.0.0",
+    # XML parsing
+    "lxml>=5.3.0",
+    # Environment and config
+    "python-dotenv>=1.1.1",
+    "pydantic>=2.9.0",
+    "pydantic-settings>=2.5.0",
+    # CLI
+    "click>=8.1.0",
+    "rich>=13.9.0",
+    "prompt-toolkit>=3.0.0",
+    "matplotlib>=3.10.6",
+    "langchain-chroma>=0.2.6",
+    "langchain-huggingface>=0.3.1",
+    "ipywidgets>=8.1.7",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=5.0.0",
+    "black>=24.8.0",
+    "ruff>=0.6.0",
+    "mypy>=1.11.0",
+    "ipython>=8.27.0",
+]
+
+[project.scripts]
+trace-ai = "enterprise_assistant.cli.interactive:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+]
+ignore = [
+    "E501",  # line too long (handled by black)
+]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --cov=trace_ai --cov-report=term-missing"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
+    "pytest-cov>=7.0.0",
+]

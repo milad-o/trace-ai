@@ -1,0 +1,112 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. FIN002.
+      *****************************************************************
+      * Program: Account Reconciliation
+      * Description: Processes FINANCE.INPUT.MASTER, FINANCE.INPUT.TRANS and produces
+      *              FINANCE.OUTPUT.FIN002, FINANCE.REPORT.FIN002
+      * Author: SYSTEM GENERATED
+      * Date: 2024
+      *****************************************************************
+
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+           SELECT FINANCE-INPUT-MASTER-FILE
+               ASSIGN TO FINANCE.INPUT.MASTER
+               ORGANIZATION IS SEQUENTIAL.
+           SELECT FINANCE-INPUT-TRANS-FILE
+               ASSIGN TO FINANCE.INPUT.TRANS
+               ORGANIZATION IS SEQUENTIAL.
+           SELECT FINANCE-OUTPUT-FIN002-FILE
+               ASSIGN TO FINANCE.OUTPUT.FIN002
+               ORGANIZATION IS SEQUENTIAL.
+           SELECT FINANCE-REPORT-FIN002-FILE
+               ASSIGN TO FINANCE.REPORT.FIN002
+               ORGANIZATION IS SEQUENTIAL.
+
+       DATA DIVISION.
+       FILE SECTION.
+       FD  FINANCE-INPUT-MASTER-FILE.
+       01  FINANCE-INPUT-MASTER-RECORD.
+           05  FINANCE-INPUT-MASTER-KEY           PIC X(10).
+           05  FINANCE-INPUT-MASTER-DATA          PIC X(100).
+           05  FINANCE-INPUT-MASTER-AMOUNT        PIC 9(7)V99.
+           05  FINANCE-INPUT-MASTER-DATE          PIC X(10).
+           05  FILLER                  PIC X(60).
+       FD  FINANCE-INPUT-TRANS-FILE.
+       01  FINANCE-INPUT-TRANS-RECORD.
+           05  FINANCE-INPUT-TRANS-KEY           PIC X(10).
+           05  FINANCE-INPUT-TRANS-DATA          PIC X(100).
+           05  FINANCE-INPUT-TRANS-AMOUNT        PIC 9(7)V99.
+           05  FINANCE-INPUT-TRANS-DATE          PIC X(10).
+           05  FILLER                  PIC X(60).
+       FD  FINANCE-OUTPUT-FIN002-FILE.
+       01  FINANCE-OUTPUT-FIN002-RECORD.
+           05  FINANCE-OUTPUT-FIN002-KEY           PIC X(10).
+           05  FINANCE-OUTPUT-FIN002-DATA          PIC X(100).
+           05  FINANCE-OUTPUT-FIN002-AMOUNT        PIC 9(7)V99.
+           05  FINANCE-OUTPUT-FIN002-STATUS        PIC X(10).
+           05  FILLER                  PIC X(60).
+       FD  FINANCE-REPORT-FIN002-FILE.
+       01  FINANCE-REPORT-FIN002-RECORD.
+           05  FINANCE-REPORT-FIN002-KEY           PIC X(10).
+           05  FINANCE-REPORT-FIN002-DATA          PIC X(100).
+           05  FINANCE-REPORT-FIN002-AMOUNT        PIC 9(7)V99.
+           05  FINANCE-REPORT-FIN002-STATUS        PIC X(10).
+           05  FILLER                  PIC X(60).
+
+       WORKING-STORAGE SECTION.
+       01  WS-EOF-FLAG             PIC X VALUE 'N'.
+           88  END-OF-FILE         VALUE 'Y'.
+       01  WS-RECORD-COUNT         PIC 9(7) VALUE 0.
+       01  WS-ERROR-COUNT          PIC 9(5) VALUE 0.
+       01  WS-TOTAL-AMOUNT         PIC 9(9)V99 VALUE 0.
+
+       PROCEDURE DIVISION.
+
+       0000-MAIN.
+           PERFORM 1000-INITIALIZE
+           PERFORM 2000-PROCESS-RECORDS
+           PERFORM 3000-FINALIZE
+           STOP RUN.
+
+       1000-INITIALIZE.
+           DISPLAY '*** FIN002 STARTED ***'
+           OPEN INPUT FINANCE-INPUT-MASTER-FILE
+           OPEN INPUT FINANCE-INPUT-TRANS-FILE
+           OPEN OUTPUT FINANCE-OUTPUT-FIN002-FILE
+           OPEN OUTPUT FINANCE-REPORT-FIN002-FILE
+           MOVE 'N' TO WS-EOF-FLAG
+           MOVE 0 TO WS-RECORD-COUNT
+           MOVE 0 TO WS-ERROR-COUNT.
+
+       2000-PROCESS-RECORDS.
+           PERFORM UNTIL END-OF-FILE
+               READ FINANCE-INPUT-MASTER-FILE
+                   AT END
+                       MOVE 'Y' TO WS-EOF-FLAG
+                   NOT AT END
+                       PERFORM 2100-VALIDATE-RECORD
+                       PERFORM 2200-TRANSFORM-RECORD
+                       WRITE FINANCE-OUTPUT-FIN002-RECORD
+                       ADD 1 TO WS-RECORD-COUNT
+               END-READ
+           END-PERFORM.
+
+       2100-VALIDATE-RECORD.
+           IF FINANCE-INPUT-MASTER-KEY = SPACES
+               ADD 1 TO WS-ERROR-COUNT
+           END-IF.
+
+       2200-TRANSFORM-RECORD.
+           ADD FINANCE-INPUT-MASTER-AMOUNT TO WS-TOTAL-AMOUNT.
+
+       3000-FINALIZE.
+           CLOSE FINANCE-INPUT-MASTER-FILE
+           CLOSE FINANCE-INPUT-TRANS-FILE
+           CLOSE FINANCE-OUTPUT-FIN002-FILE
+           CLOSE FINANCE-REPORT-FIN002-FILE
+           DISPLAY '*** FIN002 COMPLETED ***'
+           DISPLAY 'RECORDS PROCESSED: ' WS-RECORD-COUNT
+           DISPLAY 'ERRORS FOUND: ' WS-ERROR-COUNT
+           DISPLAY 'TOTAL AMOUNT: ' WS-TOTAL-AMOUNT.

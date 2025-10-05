@@ -1,0 +1,113 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. PAY006.
+      *****************************************************************
+      * Program: Payroll Quarter-End Report
+      * Description: Processes PAYROLL.INPUT.MASTER, PAYROLL.INPUT.TRANS and produces
+      *              PAYROLL.OUTPUT.PAY006, PAYROLL.REPORT.PAY006
+      * Author: SYSTEM GENERATED
+      * Date: 2024
+      *****************************************************************
+
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+           SELECT PAYROLL-INPUT-MASTER-FILE
+               ASSIGN TO PAYROLL.INPUT.MASTER
+               ORGANIZATION IS SEQUENTIAL.
+           SELECT PAYROLL-INPUT-TRANS-FILE
+               ASSIGN TO PAYROLL.INPUT.TRANS
+               ORGANIZATION IS SEQUENTIAL.
+           SELECT PAYROLL-OUTPUT-PAY006-FILE
+               ASSIGN TO PAYROLL.OUTPUT.PAY006
+               ORGANIZATION IS SEQUENTIAL.
+           SELECT PAYROLL-REPORT-PAY006-FILE
+               ASSIGN TO PAYROLL.REPORT.PAY006
+               ORGANIZATION IS SEQUENTIAL.
+
+       DATA DIVISION.
+       FILE SECTION.
+       FD  PAYROLL-INPUT-MASTER-FILE.
+       01  PAYROLL-INPUT-MASTER-RECORD.
+           05  PAYROLL-INPUT-MASTER-KEY           PIC X(10).
+           05  PAYROLL-INPUT-MASTER-DATA          PIC X(100).
+           05  PAYROLL-INPUT-MASTER-AMOUNT        PIC 9(7)V99.
+           05  PAYROLL-INPUT-MASTER-DATE          PIC X(10).
+           05  FILLER                  PIC X(60).
+       FD  PAYROLL-INPUT-TRANS-FILE.
+       01  PAYROLL-INPUT-TRANS-RECORD.
+           05  PAYROLL-INPUT-TRANS-KEY           PIC X(10).
+           05  PAYROLL-INPUT-TRANS-DATA          PIC X(100).
+           05  PAYROLL-INPUT-TRANS-AMOUNT        PIC 9(7)V99.
+           05  PAYROLL-INPUT-TRANS-DATE          PIC X(10).
+           05  FILLER                  PIC X(60).
+       FD  PAYROLL-OUTPUT-PAY006-FILE.
+       01  PAYROLL-OUTPUT-PAY006-RECORD.
+           05  PAYROLL-OUTPUT-PAY006-KEY           PIC X(10).
+           05  PAYROLL-OUTPUT-PAY006-DATA          PIC X(100).
+           05  PAYROLL-OUTPUT-PAY006-AMOUNT        PIC 9(7)V99.
+           05  PAYROLL-OUTPUT-PAY006-STATUS        PIC X(10).
+           05  FILLER                  PIC X(60).
+       FD  PAYROLL-REPORT-PAY006-FILE.
+       01  PAYROLL-REPORT-PAY006-RECORD.
+           05  PAYROLL-REPORT-PAY006-KEY           PIC X(10).
+           05  PAYROLL-REPORT-PAY006-DATA          PIC X(100).
+           05  PAYROLL-REPORT-PAY006-AMOUNT        PIC 9(7)V99.
+           05  PAYROLL-REPORT-PAY006-STATUS        PIC X(10).
+           05  FILLER                  PIC X(60).
+
+       WORKING-STORAGE SECTION.
+       01  WS-EOF-FLAG             PIC X VALUE 'N'.
+           88  END-OF-FILE         VALUE 'Y'.
+       01  WS-RECORD-COUNT         PIC 9(7) VALUE 0.
+       01  WS-ERROR-COUNT          PIC 9(5) VALUE 0.
+       01  WS-TOTAL-AMOUNT         PIC 9(9)V99 VALUE 0.
+
+       PROCEDURE DIVISION.
+
+       0000-MAIN.
+           PERFORM 1000-INITIALIZE
+           PERFORM 2000-PROCESS-RECORDS
+           PERFORM 3000-FINALIZE
+           STOP RUN.
+
+       1000-INITIALIZE.
+           DISPLAY '*** PAY006 STARTED ***'
+           OPEN INPUT PAYROLL-INPUT-MASTER-FILE
+           OPEN INPUT PAYROLL-INPUT-TRANS-FILE
+           OPEN OUTPUT PAYROLL-OUTPUT-PAY006-FILE
+           OPEN OUTPUT PAYROLL-REPORT-PAY006-FILE
+           MOVE 'N' TO WS-EOF-FLAG
+           MOVE 0 TO WS-RECORD-COUNT
+           MOVE 0 TO WS-ERROR-COUNT.
+
+       2000-PROCESS-RECORDS.
+           PERFORM UNTIL END-OF-FILE
+               READ PAYROLL-INPUT-MASTER-FILE
+                   AT END
+                       MOVE 'Y' TO WS-EOF-FLAG
+                   NOT AT END
+                       PERFORM 2100-VALIDATE-RECORD
+                       PERFORM 2200-TRANSFORM-RECORD
+                       WRITE PAYROLL-OUTPUT-PAY006-RECORD
+                       ADD 1 TO WS-RECORD-COUNT
+               END-READ
+           END-PERFORM.
+           CALL "UTIL001" USING PAYROLL-INPUT-MASTER-RECORD
+
+       2100-VALIDATE-RECORD.
+           IF PAYROLL-INPUT-MASTER-KEY = SPACES
+               ADD 1 TO WS-ERROR-COUNT
+           END-IF.
+
+       2200-TRANSFORM-RECORD.
+           ADD PAYROLL-INPUT-MASTER-AMOUNT TO WS-TOTAL-AMOUNT.
+
+       3000-FINALIZE.
+           CLOSE PAYROLL-INPUT-MASTER-FILE
+           CLOSE PAYROLL-INPUT-TRANS-FILE
+           CLOSE PAYROLL-OUTPUT-PAY006-FILE
+           CLOSE PAYROLL-REPORT-PAY006-FILE
+           DISPLAY '*** PAY006 COMPLETED ***'
+           DISPLAY 'RECORDS PROCESSED: ' WS-RECORD-COUNT
+           DISPLAY 'ERRORS FOUND: ' WS-ERROR-COUNT
+           DISPLAY 'TOTAL AMOUNT: ' WS-TOTAL-AMOUNT.

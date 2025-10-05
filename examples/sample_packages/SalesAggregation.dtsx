@@ -1,0 +1,93 @@
+<?xml version="1.0"?>
+<Executable xmlns:DTS="www.microsoft.com/SqlServer/Dts"
+  DTS:ExecutableType="Package"
+  DTS:ObjectName="SalesAggregation"
+  DTS:DTSID="{SALES-PKG-2025}"
+  DTS:CreatorName="BI_Team"
+  DTS:CreationDate="2025-09-15T14:00:00"
+  DTS:Description="Daily sales aggregation and reporting package"
+  DTS:VersionMajor="2"
+  DTS:VersionMinor="1">
+
+  <DTS:ConnectionManagers>
+    <DTS:ConnectionManager
+      DTS:ObjectName="DataWarehouse"
+      DTS:DTSID="{CONN-DW-SALES}"
+      DTS:CreationName="OLEDB"
+      DTS:Description="Data warehouse connection">
+      <DTS:ObjectData>
+        <DTS:ConnectionManager ConnectionString="Server=warehouse-sql-01;Database=DW;Provider=SQLNCLI11;Integrated Security=SSPI;"/>
+      </DTS:ObjectData>
+    </DTS:ConnectionManager>
+
+    <DTS:ConnectionManager
+      DTS:ObjectName="ReportingDB"
+      DTS:DTSID="{CONN-REPORTING}"
+      DTS:CreationName="OLEDB"
+      DTS:Description="Reporting database">
+      <DTS:ObjectData>
+        <DTS:ConnectionManager ConnectionString="Data Source=report-sql-01;Initial Catalog=ReportingDB;Provider=SQLNCLI11;"/>
+      </DTS:ObjectData>
+    </DTS:ConnectionManager>
+  </DTS:ConnectionManagers>
+
+  <DTS:Variables>
+    <DTS:Variable
+      DTS:ObjectName="ReportDate"
+      DTS:Namespace="User"
+      DTS:DataType="DateTime">
+      <DTS:VariableValue>2025-10-03</DTS:VariableValue>
+    </DTS:Variable>
+
+    <DTS:Variable
+      DTS:ObjectName="AggregationLevel"
+      DTS:Namespace="User"
+      DTS:DataType="String">
+      <DTS:VariableValue>Daily</DTS:VariableValue>
+    </DTS:Variable>
+  </DTS:Variables>
+
+  <DTS:Executables>
+    <DTS:Executable
+      DTS:ObjectName="Aggregate Sales by Region"
+      DTS:DTSID="{TASK-AGG-REGION}"
+      DTS:ExecutableType="STOCK:SQLTask"
+      DTS:Description="Calculate regional sales totals">
+      <DTS:ObjectData>
+        <SQLTask:SqlTaskData xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask"
+          SQLTask:Connection="{CONN-DW-SALES}"
+          SQLTask:SqlStatementSource="SELECT Region, SUM(SalesAmount) as TotalSales, COUNT(*) as TransactionCount FROM fact.Sales JOIN dim.Customer ON fact.Sales.CustomerID = dim.Customer.CustomerID GROUP BY Region"/>
+      </DTS:ObjectData>
+    </DTS:Executable>
+
+    <DTS:Executable
+      DTS:ObjectName="Load Report Tables"
+      DTS:DTSID="{TASK-LOAD-REPORT}"
+      DTS:ExecutableType="STOCK:PipelineTask"
+      DTS:Description="Load aggregated data to reporting database"/>
+
+    <DTS:Executable
+      DTS:ObjectName="Update Sales KPIs"
+      DTS:DTSID="{TASK-KPI}"
+      DTS:ExecutableType="STOCK:SQLTask">
+      <DTS:ObjectData>
+        <SQLTask:SqlTaskData xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask"
+          SQLTask:Connection="{CONN-REPORTING}"
+          SQLTask:SqlStatementSource="EXEC rpt.UpdateSalesKPIs @ReportDate"/>
+      </DTS:ObjectData>
+    </DTS:Executable>
+  </DTS:Executables>
+
+  <DTS:PrecedenceConstraints>
+    <DTS:PrecedenceConstraint
+      DTS:From="{TASK-AGG-REGION}"
+      DTS:To="{TASK-LOAD-REPORT}"
+      DTS:Value="1"/>
+
+    <DTS:PrecedenceConstraint
+      DTS:From="{TASK-LOAD-REPORT}"
+      DTS:To="{TASK-KPI}"
+      DTS:Value="1"/>
+  </DTS:PrecedenceConstraints>
+
+</Executable>

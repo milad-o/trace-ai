@@ -1,0 +1,247 @@
+<?xml version="1.0"?>
+<Executable xmlns:DTS="www.microsoft.com/SqlServer/Dts"
+  DTS:ExecutableType="Package"
+  DTS:ObjectName="CustomerETL"
+  DTS:DTSID="{A1B2C3D4-1234-5678-9ABC-DEF012345678}"
+  DTS:CreatorName="ETL_Developer"
+  DTS:CreationDate="2025-10-01T10:30:00"
+  DTS:Description="Extract, transform, and load customer data from source to warehouse"
+  DTS:VersionMajor="1"
+  DTS:VersionMinor="2">
+
+  <DTS:ConnectionManagers>
+    <!-- Source database -->
+    <DTS:ConnectionManager
+      DTS:ObjectName="CustomerDB"
+      DTS:DTSID="{CONN-CUSTOMER-DB}"
+      DTS:CreationName="OLEDB"
+      DTS:Description="Production customer database">
+      <DTS:ObjectData>
+        <DTS:ConnectionManager ConnectionString="Data Source=prod-sql-01;Initial Catalog=CustomerDB;Provider=SQLNCLI11;Integrated Security=SSPI;"/>
+      </DTS:ObjectData>
+    </DTS:ConnectionManager>
+
+    <!-- Warehouse database -->
+    <DTS:ConnectionManager
+      DTS:ObjectName="DataWarehouse"
+      DTS:DTSID="{CONN-DW}"
+      DTS:CreationName="OLEDB"
+      DTS:Description="Data warehouse destination">
+      <DTS:ObjectData>
+        <DTS:ConnectionManager ConnectionString="Server=warehouse-sql-01;Database=DW;Provider=SQLNCLI11;Integrated Security=SSPI;"/>
+      </DTS:ObjectData>
+    </DTS:ConnectionManager>
+
+    <!-- Staging database -->
+    <DTS:ConnectionManager
+      DTS:ObjectName="StagingDB"
+      DTS:DTSID="{CONN-STAGING}"
+      DTS:CreationName="OLEDB">
+      <DTS:ObjectData>
+        <DTS:ConnectionManager ConnectionString="Data Source=staging-sql-01;Initial Catalog=Staging;Provider=SQLNCLI11;"/>
+      </DTS:ObjectData>
+    </DTS:ConnectionManager>
+
+    <!-- FTP Connection for external data -->
+    <DTS:ConnectionManager
+      DTS:ObjectName="LegacyFTP"
+      DTS:DTSID="{CONN-FTP}"
+      DTS:CreationName="FTP"
+      DTS:Description="Legacy FTP server for customer files">
+      <DTS:ObjectData>
+        <DTS:ConnectionManager ConnectionString="ftp://legacy-ftp.example.com:21"/>
+      </DTS:ObjectData>
+    </DTS:ConnectionManager>
+  </DTS:ConnectionManagers>
+
+  <DTS:Variables>
+    <DTS:Variable
+      DTS:ObjectName="BatchSize"
+      DTS:Namespace="User"
+      DTS:DataType="Int32"
+      DTS:Description="Number of records to process per batch">
+      <DTS:VariableValue>5000</DTS:VariableValue>
+    </DTS:Variable>
+
+    <DTS:Variable
+      DTS:ObjectName="ProcessDate"
+      DTS:Namespace="User"
+      DTS:DataType="DateTime"
+      DTS:Description="Date to process data for">
+      <DTS:VariableValue>2025-10-03</DTS:VariableValue>
+    </DTS:Variable>
+
+    <DTS:Variable
+      DTS:ObjectName="ErrorThreshold"
+      DTS:Namespace="User"
+      DTS:DataType="Int32">
+      <DTS:VariableValue>100</DTS:VariableValue>
+    </DTS:Variable>
+
+    <DTS:Variable
+      DTS:ObjectName="SourceTable"
+      DTS:Namespace="User"
+      DTS:DataType="String">
+      <DTS:VariableValue>dbo.Customer</DTS:VariableValue>
+    </DTS:Variable>
+
+    <DTS:Variable
+      DTS:ObjectName="IsFullLoad"
+      DTS:Namespace="User"
+      DTS:DataType="Boolean">
+      <DTS:VariableValue>false</DTS:VariableValue>
+    </DTS:Variable>
+  </DTS:Variables>
+
+  <DTS:Executables>
+    <!-- Truncate staging table -->
+    <DTS:Executable
+      DTS:ObjectName="Truncate Staging"
+      DTS:DTSID="{TASK-TRUNCATE}"
+      DTS:ExecutableType="STOCK:SQLTask"
+      DTS:Description="Clear staging table before load">
+      <DTS:ObjectData>
+        <SQLTask:SqlTaskData xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask"
+          SQLTask:Connection="{CONN-STAGING}"
+          SQLTask:SqlStatementSource="TRUNCATE TABLE staging.CustomerStaging"/>
+      </DTS:ObjectData>
+    </DTS:Executable>
+
+    <!-- Extract customers from source -->
+    <DTS:Executable
+      DTS:ObjectName="Extract Active Customers"
+      DTS:DTSID="{TASK-EXTRACT}"
+      DTS:ExecutableType="STOCK:SQLTask"
+      DTS:Description="Extract active customers modified in last 24 hours">
+      <DTS:ObjectData>
+        <SQLTask:SqlTaskData xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask"
+          SQLTask:Connection="{CONN-CUSTOMER-DB}"
+          SQLTask:SqlStatementSource="SELECT CustomerID, FirstName, LastName, Email, Phone, Address, City, State, ZipCode, CreatedDate, ModifiedDate FROM dbo.Customer WHERE IsActive = 1 AND ModifiedDate >= DATEADD(day, -1, GETDATE())"/>
+      </DTS:ObjectData>
+    </DTS:Executable>
+
+    <!-- Data Flow: Transform and Stage -->
+    <DTS:Executable
+      DTS:ObjectName="Transform Customer Data"
+      DTS:DTSID="{TASK-DATAFLOW-1}"
+      DTS:ExecutableType="STOCK:PipelineTask"
+      DTS:Description="Apply transformations and load to staging">
+      <DTS:ObjectData>
+        <pipeline:Pipeline xmlns:pipeline="www.microsoft.com/SqlServer/Dts/Pipeline">
+          <pipeline:Components>
+            <pipeline:Component Name="OLE DB Source" ComponentClassID="DTSAdapter.OleDbSource">
+              <pipeline:Properties>
+                <pipeline:Property Name="SqlCommand">SELECT * FROM dbo.Customer WHERE IsActive = 1</pipeline:Property>
+              </pipeline:Properties>
+            </pipeline:Component>
+            <pipeline:Component Name="Derived Column" ComponentClassID="DTSTransform.DerivedColumn"/>
+            <pipeline:Component Name="OLE DB Destination" ComponentClassID="DTSAdapter.OleDbDestination">
+              <pipeline:Properties>
+                <pipeline:Property Name="Table">staging.CustomerStaging</pipeline:Property>
+              </pipeline:Properties>
+            </pipeline:Component>
+          </pipeline:Components>
+        </pipeline:Pipeline>
+      </DTS:ObjectData>
+    </DTS:Executable>
+
+    <!-- Validate data quality -->
+    <DTS:Executable
+      DTS:ObjectName="Validate Customer Data"
+      DTS:DTSID="{TASK-VALIDATE}"
+      DTS:ExecutableType="STOCK:SQLTask"
+      DTS:Description="Run data quality checks on staged data">
+      <DTS:ObjectData>
+        <SQLTask:SqlTaskData xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask"
+          SQLTask:Connection="{CONN-STAGING}"
+          SQLTask:SqlStatementSource="EXEC staging.ValidateCustomerData"/>
+      </DTS:ObjectData>
+    </DTS:Executable>
+
+    <!-- Merge to warehouse -->
+    <DTS:Executable
+      DTS:ObjectName="Merge to Warehouse"
+      DTS:DTSID="{TASK-MERGE}"
+      DTS:ExecutableType="STOCK:SQLTask"
+      DTS:Description="Merge validated data into warehouse">
+      <DTS:ObjectData>
+        <SQLTask:SqlTaskData xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask"
+          SQLTask:Connection="{CONN-DW}"
+          SQLTask:SqlStatementSource="MERGE dim.Customer AS target USING staging.CustomerStaging AS source ON target.CustomerID = source.CustomerID WHEN MATCHED THEN UPDATE SET target.FirstName = source.FirstName, target.LastName = source.LastName WHEN NOT MATCHED THEN INSERT VALUES (source.CustomerID, source.FirstName, source.LastName);"/>
+      </DTS:ObjectData>
+    </DTS:Executable>
+
+    <!-- Log completion -->
+    <DTS:Executable
+      DTS:ObjectName="Log ETL Completion"
+      DTS:DTSID="{TASK-LOG}"
+      DTS:ExecutableType="STOCK:SQLTask"
+      DTS:Description="Record ETL run in audit log">
+      <DTS:ObjectData>
+        <SQLTask:SqlTaskData xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask"
+          SQLTask:Connection="{CONN-DW}"
+          SQLTask:SqlStatementSource="INSERT INTO audit.ETLLog (PackageName, Status, CompletedDate) VALUES ('CustomerETL', 'Success', GETDATE())"/>
+      </DTS:ObjectData>
+    </DTS:Executable>
+
+    <!-- Error handler -->
+    <DTS:Executable
+      DTS:ObjectName="Handle Errors"
+      DTS:DTSID="{TASK-ERROR}"
+      DTS:ExecutableType="STOCK:SendMailTask"
+      DTS:Description="Send notification on failure"/>
+  </DTS:Executables>
+
+  <DTS:PrecedenceConstraints>
+    <!-- Success path -->
+    <DTS:PrecedenceConstraint
+      DTS:From="{TASK-TRUNCATE}"
+      DTS:To="{TASK-EXTRACT}"
+      DTS:Value="1"
+      DTS:EvalOp="Success"/>
+
+    <DTS:PrecedenceConstraint
+      DTS:From="{TASK-EXTRACT}"
+      DTS:To="{TASK-DATAFLOW-1}"
+      DTS:Value="1"
+      DTS:EvalOp="Success"/>
+
+    <DTS:PrecedenceConstraint
+      DTS:From="{TASK-DATAFLOW-1}"
+      DTS:To="{TASK-VALIDATE}"
+      DTS:Value="1"
+      DTS:EvalOp="Success"/>
+
+    <DTS:PrecedenceConstraint
+      DTS:From="{TASK-VALIDATE}"
+      DTS:To="{TASK-MERGE}"
+      DTS:Value="1"
+      DTS:EvalOp="Success"/>
+
+    <DTS:PrecedenceConstraint
+      DTS:From="{TASK-MERGE}"
+      DTS:To="{TASK-LOG}"
+      DTS:Value="1"
+      DTS:EvalOp="Success"/>
+
+    <!-- Error paths -->
+    <DTS:PrecedenceConstraint
+      DTS:From="{TASK-EXTRACT}"
+      DTS:To="{TASK-ERROR}"
+      DTS:Value="2"
+      DTS:EvalOp="Failure"/>
+
+    <DTS:PrecedenceConstraint
+      DTS:From="{TASK-DATAFLOW-1}"
+      DTS:To="{TASK-ERROR}"
+      DTS:Value="2"
+      DTS:EvalOp="Failure"/>
+
+    <DTS:PrecedenceConstraint
+      DTS:From="{TASK-VALIDATE}"
+      DTS:To="{TASK-ERROR}"
+      DTS:Value="2"
+      DTS:EvalOp="Failure"/>
+  </DTS:PrecedenceConstraints>
+
+</Executable>
