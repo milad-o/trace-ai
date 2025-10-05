@@ -34,6 +34,9 @@ dependencies = [
     "jinja2>=3.1.0",
     # Async file I/O
     "aiofiles>=24.1.0",
+    # Web UI
+    "reflex>=0.6.0",
+    "plotly>=5.18.0",
     # Environment and config
     "python-dotenv>=1.1.1",
     "pydantic>=2.9.0",

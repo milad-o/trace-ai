@@ -53,3 +53,8 @@ examples/sample_databases/
 .ipynb_checkpoints/
 *.ipynb
 dev_docs/
+
+# Reflex Web UI
+.web/
+assets/
+reflex.db

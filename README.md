@@ -59,7 +59,26 @@ uv sync
 pip install -e .
 ```
 
-### Run Demo (No API Key Required!)
+### Option 1: Web UI (Recommended) 🎨
+
+Launch the modern web interface with chat, dashboards, and real-time monitoring:
+
+```bash
+reflex run
+```
+
+Open [http://localhost:3000](http://localhost:3000)
+
+**Features:**
+- 💬 Interactive chat with streaming responses
+- 📊 Real-time dashboards and metrics
+- 🔍 Graph visualization
+- 📈 Performance monitoring
+- ⚡ Async mode (10x faster)
+
+See [docs/WEBUI.md](docs/WEBUI.md) for full documentation.
+
+### Option 2: Python API
 
 ```bash
 python examples/quick_demo.py
