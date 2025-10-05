@@ -1,0 +1,10 @@
+source_table,target_table,transformation,transformation_type,frequency
+raw_customers,staging_customers,Remove duplicates and validate email,cleansing,daily
+raw_orders,staging_orders,Validate order dates and amounts,validation,hourly
+raw_products,staging_products,Normalize product names and categories,standardization,daily
+staging_customers,dim_customers,"Slowly changing dimension Type 2, track history",scd_type2,daily
+staging_orders,fact_orders,Aggregate by date and product,aggregation,daily
+staging_products,dim_products,Full refresh with product hierarchy,full_load,weekly
+dim_customers,customer_360,Join with orders and preferences,enrichment,daily
+fact_orders,sales_summary,Sum revenue by customer and product,aggregation,daily
+dim_products,product_catalog,Export to external system,export,daily

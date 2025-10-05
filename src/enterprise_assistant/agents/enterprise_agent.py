@@ -305,8 +305,30 @@ class EnterpriseAgent:
         # Create visualization tool
         visualization_tool = create_graph_visualization_tool(self.graph)
 
+        # Create code generation tools
+        from enterprise_assistant.tools.code_generation_tools import (
+            GenerateJSONTool,
+            GenerateCSVTool,
+            GenerateExcelTool,
+        )
+        from enterprise_assistant.tools.python_generator import GeneratePythonTool
+
+        queries = GraphQueries(self.graph)
+        json_tool = GenerateJSONTool(queries=queries)
+        csv_tool = GenerateCSVTool(queries=queries)
+        excel_tool = GenerateExcelTool(queries=queries)
+        python_tool = GeneratePythonTool(queries=queries)
+
         # Combine all tools
-        all_tools = graph_tools + [semantic_search, get_graph_statistics, visualization_tool]
+        all_tools = graph_tools + [
+            semantic_search,
+            get_graph_statistics,
+            visualization_tool,
+            json_tool,
+            csv_tool,
+            excel_tool,
+            python_tool,
+        ]
 
         # Configure middlewares
         middlewares = []

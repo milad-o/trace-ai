@@ -1,0 +1,52 @@
+{
+  "name": "CustomerDataPipeline",
+  "description": "Daily customer data ETL pipeline",
+  "version": "2.1.0",
+  "author": "Data Engineering Team",
+  "jobs": [
+    {
+      "id": "extract_customers",
+      "name": "Extract Customer Data",
+      "type": "extract",
+      "description": "Extract raw customer data from source database",
+      "sql": "SELECT customer_id, first_name, last_name, email, created_at FROM raw_customers WHERE updated_at >= :last_run_date",
+      "depends_on": []
+    },
+    {
+      "id": "validate_customers",
+      "name": "Validate Customer Records",
+      "type": "validate",
+      "description": "Validate customer data quality",
+      "script": "validate_email_format(df['email']); validate_names(df['first_name'], df['last_name'])",
+      "depends_on": ["extract_customers"]
+    },
+    {
+      "id": "transform_customers",
+      "name": "Transform Customer Data",
+      "type": "transform",
+      "description": "Apply business logic transformations",
+      "script": "df['full_name'] = df['first_name'] + ' ' + df['last_name']; df['email_domain'] = extract_domain(df['email'])",
+      "depends_on": ["validate_customers"]
+    },
+    {
+      "id": "load_customers",
+      "name": "Load to Data Warehouse",
+      "type": "load",
+      "description": "Load transformed data to warehouse",
+      "sql": "INSERT INTO dwh.dim_customers SELECT * FROM staging.customers_transformed",
+      "depends_on": ["transform_customers"]
+    }
+  ],
+  "parameters": {
+    "last_run_date": {
+      "type": "datetime",
+      "value": "2024-01-01",
+      "description": "Last successful run timestamp"
+    },
+    "batch_size": {
+      "type": "int",
+      "value": 10000,
+      "description": "Number of records per batch"
+    }
+  }
+}
