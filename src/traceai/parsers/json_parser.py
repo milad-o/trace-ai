@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from enterprise_assistant.parsers.base import (
+from traceai.parsers.base import (
     BaseParser,
     Component,
     DataEntity,

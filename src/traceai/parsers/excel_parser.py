@@ -13,7 +13,7 @@ from typing import Any
 import openpyxl
 from openpyxl.worksheet.worksheet import Worksheet
 
-from enterprise_assistant.parsers.base import (
+from traceai.parsers.base import (
     BaseParser,
     Component,
     DataEntity,

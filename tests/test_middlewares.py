@@ -2,7 +2,7 @@
 
 import pytest
 
-from enterprise_assistant.agents.middlewares import (
+from traceai.agents.middlewares import (
     AuditMiddleware,
     ConversationMemoryMiddleware,
     LongTermMemoryMiddleware,

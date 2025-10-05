@@ -17,7 +17,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 from pydantic import BaseModel, Field
 
-from enterprise_assistant.graph.queries import GraphQueries
+from traceai.graph.queries import GraphQueries
 
 
 class GenerateJSONInput(BaseModel):

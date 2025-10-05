@@ -20,12 +20,12 @@ load_dotenv()
 # Fix HuggingFace tokenizer parallelism warning
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-from enterprise_assistant.graph.builder import build_graph_from_documents
-from enterprise_assistant.graph.queries import GraphQueries
-from enterprise_assistant.logger import logger
-from enterprise_assistant.parsers import parser_registry
-from enterprise_assistant.tools import create_graph_tools, create_graph_visualization_tool
-from enterprise_assistant.agents.middlewares import (
+from traceai.graph.builder import build_graph_from_documents
+from traceai.graph.queries import GraphQueries
+from traceai.logger import logger
+from traceai.parsers import parser_registry
+from traceai.tools import create_graph_tools, create_graph_visualization_tool
+from traceai.agents.middlewares import (
     ConversationMemoryMiddleware,
     AuditMiddleware,
     ProgressTrackingMiddleware,
@@ -306,12 +306,12 @@ class EnterpriseAgent:
         visualization_tool = create_graph_visualization_tool(self.graph)
 
         # Create code generation tools
-        from enterprise_assistant.tools.code_generation_tools import (
+        from traceai.tools.code_generation_tools import (
             GenerateJSONTool,
             GenerateCSVTool,
             GenerateExcelTool,
         )
-        from enterprise_assistant.tools.python_generator import GeneratePythonTool
+        from traceai.tools.python_generator import GeneratePythonTool
 
         queries = GraphQueries(self.graph)
         json_tool = GenerateJSONTool(queries=queries)

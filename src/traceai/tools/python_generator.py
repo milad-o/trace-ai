@@ -13,7 +13,7 @@ from jinja2 import Template
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
 
-from enterprise_assistant.graph.queries import GraphQueries
+from traceai.graph.queries import GraphQueries
 
 
 class GeneratePythonInput(BaseModel):

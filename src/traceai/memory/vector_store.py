@@ -7,7 +7,7 @@ from typing import Any
 import chromadb
 from chromadb.config import Settings
 
-from enterprise_assistant.logger import logger
+from traceai.logger import logger
 
 
 class VectorMemoryStore(ABC):

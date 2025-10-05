@@ -12,8 +12,8 @@ import networkx as nx
 from langchain_core.tools import BaseTool
 from pydantic import BaseModel, Field
 
-from enterprise_assistant.graph.schema import EdgeType, NodeType
-from enterprise_assistant.logger import logger
+from traceai.graph.schema import EdgeType, NodeType
+from traceai.logger import logger
 
 
 class GraphVisualizationInput(BaseModel):

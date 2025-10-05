@@ -12,7 +12,7 @@ from typing import Any
 
 import pandas as pd
 
-from enterprise_assistant.parsers.base import (
+from traceai.parsers.base import (
     BaseParser,
     Component,
     DataEntity,

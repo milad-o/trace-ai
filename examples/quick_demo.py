@@ -11,10 +11,10 @@ It tests:
 
 from pathlib import Path
 
-from enterprise_assistant.agents import EnterpriseAgent
-from enterprise_assistant.graph.queries import GraphQueries
-from enterprise_assistant.graph.schema import NodeType
-from enterprise_assistant.parsers import parser_registry
+from traceai.agents import EnterpriseAgent
+from traceai.graph.queries import GraphQueries
+from traceai.graph.schema import NodeType
+from traceai.parsers import parser_registry
 
 def main():
     print("=" * 80)

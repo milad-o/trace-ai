@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from enterprise_assistant.memory.conversation_store import SQLiteConversationStore
-from enterprise_assistant.memory.vector_store import ChromaVectorStore
+from traceai.memory.conversation_store import SQLiteConversationStore
+from traceai.memory.vector_store import ChromaVectorStore
 
 
 class TestSQLiteConversationStore:

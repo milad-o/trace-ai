@@ -27,9 +27,9 @@ env_path = Path(__file__).parent.parent / ".env"
 if env_path.exists():
     load_dotenv(env_path)
 
-from enterprise_assistant.graph.builder import KnowledgeGraphBuilder
-from enterprise_assistant.parsers import parser_registry
-from enterprise_assistant.agents.enterprise_agent import create_enterprise_agent
+from traceai.graph.builder import KnowledgeGraphBuilder
+from traceai.parsers import parser_registry
+from traceai.agents.enterprise_agent import create_enterprise_agent
 
 console = Console()
 
@@ -132,7 +132,7 @@ def visualize_graph_structure(graph: nx.DiGraph):
     tree = Tree("📊 Enterprise Knowledge Graph")
 
     # Group by document type
-    from enterprise_assistant.graph.schema import NodeType
+    from traceai.graph.schema import NodeType
     packages = {}
     for node_id, data in graph.nodes(data=True):
         if data.get("node_type") == NodeType.PACKAGE:
@@ -344,12 +344,12 @@ def demonstrate_lineage_tracing(graph: nx.DiGraph):
     """Demonstrate data lineage tracing through the ETL pipeline."""
     console.print("\n[bold cyan]📈 Data Lineage Tracing[/bold cyan]\n")
 
-    from enterprise_assistant.graph.queries import GraphQueries
+    from traceai.graph.queries import GraphQueries
 
     queries = GraphQueries(graph)
 
     # Find a data entity to trace
-    from enterprise_assistant.graph.schema import NodeType
+    from traceai.graph.schema import NodeType
     tables = queries.find_nodes_by_type(NodeType.TABLE)
 
     if tables:
@@ -379,12 +379,12 @@ def demonstrate_impact_analysis(graph: nx.DiGraph):
     """Demonstrate impact analysis for a component change."""
     console.print("\n[bold cyan]⚠️  Impact Analysis[/bold cyan]\n")
 
-    from enterprise_assistant.graph.queries import GraphQueries
+    from traceai.graph.queries import GraphQueries
 
     queries = GraphQueries(graph)
 
     # Find components
-    from enterprise_assistant.graph.schema import NodeType
+    from traceai.graph.schema import NodeType
     tasks = queries.find_nodes_by_type(NodeType.TASK)
 
     if tasks:

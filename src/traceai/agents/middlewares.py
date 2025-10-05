@@ -5,12 +5,12 @@ from typing import Any
 
 from langchain.agents.middleware.types import AgentMiddleware
 
-from enterprise_assistant.logger import logger
-from enterprise_assistant.memory.conversation_store import (
+from traceai.logger import logger
+from traceai.memory.conversation_store import (
     ConversationStore,
     SQLiteConversationStore,
 )
-from enterprise_assistant.memory.vector_store import (
+from traceai.memory.vector_store import (
     ChromaVectorStore,
     PineconeVectorStore,
     VectorMemoryStore,

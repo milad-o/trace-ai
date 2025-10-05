@@ -8,8 +8,8 @@ from typing import Any
 import networkx as nx
 from networkx.readwrite import json_graph
 
-from enterprise_assistant.config import settings
-from enterprise_assistant.logger import logger
+from traceai.config import settings
+from traceai.logger import logger
 
 
 class GraphStorage:

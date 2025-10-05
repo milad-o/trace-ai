@@ -4,7 +4,7 @@ from typing import Any
 
 import networkx as nx
 
-from enterprise_assistant.graph.schema import EdgeType, NodeType
+from traceai.graph.schema import EdgeType, NodeType
 
 
 class GraphQueries:

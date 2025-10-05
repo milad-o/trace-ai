@@ -10,7 +10,7 @@ from typing import Any
 
 import networkx as nx
 
-from enterprise_assistant.graph.schema import (
+from traceai.graph.schema import (
     ConnectionNode,
     EdgeAttributes,
     EdgeType,
@@ -21,8 +21,8 @@ from enterprise_assistant.graph.schema import (
     VariableNode,
     create_node_id,
 )
-from enterprise_assistant.logger import logger
-from enterprise_assistant.parsers.base import ParsedDocument
+from traceai.logger import logger
+from traceai.parsers.base import ParsedDocument
 
 
 class KnowledgeGraphBuilder:
@@ -306,7 +306,7 @@ class KnowledgeGraphBuilder:
         entity_id = create_node_id(NodeType.TABLE, entity_name)
 
         if not self.graph.has_node(entity_id):
-            from enterprise_assistant.graph.schema import TableNode
+            from traceai.graph.schema import TableNode
 
             entity_attrs = TableNode(
                 id=entity_id, name=actual_entity_name, schema_name=schema_name
@@ -363,7 +363,7 @@ class KnowledgeGraphBuilder:
         Returns:
             ParsedDocument with converted data
         """
-        from enterprise_assistant.parsers.base import (
+        from traceai.parsers.base import (
             Component,
             DataSource,
             Dependency,

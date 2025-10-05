@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from enterprise_assistant.parsers.base import DocumentType, ParsedDocument
-from enterprise_assistant.parsers.ssis_parser import SSISParser, parse_ssis
+from traceai.parsers.base import DocumentType, ParsedDocument
+from traceai.parsers.ssis_parser import SSISParser, parse_ssis
 
 
 @pytest.fixture
@@ -208,7 +208,7 @@ def test_parse_ssis_with_dependencies(ssis_parser: SSISParser, tmp_path: Path):
 
 def test_extract_data_entities_from_sql(ssis_parser: SSISParser):
     """Test extracting data entities from SQL statements."""
-    from enterprise_assistant.parsers.base import Component
+    from traceai.parsers.base import Component
 
     # Component with SQL that reads and writes tables
     component = Component(

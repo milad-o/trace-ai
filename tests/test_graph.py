@@ -5,11 +5,11 @@ from pathlib import Path
 import networkx as nx
 import pytest
 
-from enterprise_assistant.graph.builder import KnowledgeGraphBuilder, build_graph_from_documents
-from enterprise_assistant.graph.queries import GraphQueries
-from enterprise_assistant.graph.schema import EdgeType, NodeType
-from enterprise_assistant.graph.storage import GraphStorage
-from enterprise_assistant.parsers.ssis_parser import parse_ssis
+from traceai.graph.builder import KnowledgeGraphBuilder, build_graph_from_documents
+from traceai.graph.queries import GraphQueries
+from traceai.graph.schema import EdgeType, NodeType
+from traceai.graph.storage import GraphStorage
+from traceai.parsers.ssis_parser import parse_ssis
 
 
 @pytest.fixture

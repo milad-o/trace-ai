@@ -13,8 +13,8 @@ import re
 from pathlib import Path
 from typing import Any
 
-from enterprise_assistant.logger import logger
-from enterprise_assistant.parsers.base import (
+from traceai.logger import logger
+from traceai.parsers.base import (
     BaseParser,
     Component,
     DataEntity,

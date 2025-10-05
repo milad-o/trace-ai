@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from enterprise_assistant.logger import logger
+from traceai.logger import logger
 
 
 class ConversationStore(ABC):

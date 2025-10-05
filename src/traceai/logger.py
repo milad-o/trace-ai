@@ -20,11 +20,11 @@ logging.basicConfig(
             show_path=False,
             markup=True
         ),
-        logging.FileHandler(logs_dir / "enterprise_assistant.log"),
+        logging.FileHandler(logs_dir / "traceai.log"),
     ],
 )
 
-logger = logging.getLogger("enterprise_assistant")
+logger = logging.getLogger("traceai")
 
 # Silence noisy HTTP logs from OpenAI/Anthropic
 logging.getLogger("httpx").setLevel(logging.WARNING)

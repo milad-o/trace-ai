@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from enterprise_assistant.graph.builder import build_graph_from_documents
-from enterprise_assistant.parsers.ssis_parser import parse_ssis
-from enterprise_assistant.tools.graph_tools import (
+from traceai.graph.builder import build_graph_from_documents
+from traceai.parsers.ssis_parser import parse_ssis
+from traceai.tools.graph_tools import (
     DependencySearchTool,
     GraphQueryTool,
     ImpactAnalysisTool,
@@ -232,7 +232,7 @@ def test_dependency_search_tool_invalid_direction(sample_graph):
 
 def test_tool_descriptions_are_helpful():
     """Test that all tools have helpful descriptions."""
-    from enterprise_assistant.tools import (
+    from traceai.tools import (
         DependencySearchTool,
         GraphQueryTool,
         ImpactAnalysisTool,
@@ -260,7 +260,7 @@ def test_tool_descriptions_are_helpful():
 
 def test_tool_schemas_are_valid():
     """Test that all tools have valid Pydantic schemas."""
-    from enterprise_assistant.tools.graph_tools import (
+    from traceai.tools.graph_tools import (
         DependencySearchInput,
         GraphQueryInput,
         ImpactAnalysisInput,

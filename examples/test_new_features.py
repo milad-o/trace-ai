@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
-from enterprise_assistant.parsers import JSONParser, ExcelParser, CSVParser
-from enterprise_assistant.parsers.base import DocumentMetadata, DocumentType
+from traceai.parsers import JSONParser, ExcelParser, CSVParser
+from traceai.parsers.base import DocumentMetadata, DocumentType
 
 
 def test_json_parser():
@@ -120,7 +120,7 @@ def test_code_generation_tools():
     """Test that code generation tools are properly imported."""
     print("Testing code generation tools import...")
 
-    from enterprise_assistant.tools import (
+    from traceai.tools import (
         GenerateJSONTool,
         GenerateCSVTool,
         GenerateExcelTool,

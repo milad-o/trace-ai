@@ -4,7 +4,7 @@ This module provides parsers for different document types (SSIS, Excel, Mainfram
 that all implement the BaseParser interface and produce ParsedDocument outputs.
 """
 
-from enterprise_assistant.parsers.base import (
+from traceai.parsers.base import (
     BaseParser,
     Component,
     DataEntity,
@@ -17,12 +17,12 @@ from enterprise_assistant.parsers.base import (
     ParserRegistry,
     parser_registry,
 )
-from enterprise_assistant.parsers.ssis_parser import SSISParser, parse_ssis
-from enterprise_assistant.parsers.cobol_parser import COBOLParser
-from enterprise_assistant.parsers.jcl_parser import JCLParser
-from enterprise_assistant.parsers.json_parser import JSONParser
-from enterprise_assistant.parsers.excel_parser import ExcelParser
-from enterprise_assistant.parsers.csv_parser import CSVParser
+from traceai.parsers.ssis_parser import SSISParser, parse_ssis
+from traceai.parsers.cobol_parser import COBOLParser
+from traceai.parsers.jcl_parser import JCLParser
+from traceai.parsers.json_parser import JSONParser
+from traceai.parsers.excel_parser import ExcelParser
+from traceai.parsers.csv_parser import CSVParser
 
 # Register parsers
 parser_registry.register(SSISParser())

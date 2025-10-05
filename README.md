@@ -11,22 +11,35 @@ An AI-powered ETL analysis tool that helps data teams understand complex data tr
 
 ## ✨ Features
 
-### 🆓 Works Without API Key (Graph-Only Mode)
-- ✅ Parse SSIS packages into knowledge graphs
+### 📊 Multi-Format Parsing
+- ✅ **SSIS Packages** (.dtsx) - ETL workflows and transformations
+- ✅ **COBOL Programs** (.cbl, .cob) - Mainframe business logic
+- ✅ **JCL Jobs** (.jcl) - Batch job workflows
+- ✅ **JSON Configs** (.json) - Pipeline definitions and schemas
+- ✅ **Excel Workbooks** (.xlsx) - Data flows with formula dependencies
+- ✅ **CSV Files** (.csv) - Lineage mappings and field transformations
+
+### 🔍 Analysis Capabilities
 - ✅ Trace data lineage (upstream/downstream)
 - ✅ Analyze impact of table changes
 - ✅ Semantic search over documents
 - ✅ Find task dependencies
 - ✅ Generate graph statistics
-- ✅ Export visualizations (SVG/PNG)
+- ✅ Visualizations (SVG/PNG with multiple layouts)
 
-### 🤖 AI-Powered (Requires API Key)
-- ✅ Natural language queries
-- ✅ Multi-step planning with write_todos
-- ✅ Complex analysis and reasoning
+### 🛠️ Code Generation Tools
+- ✅ **Export to JSON** - Full graph structure with metadata
+- ✅ **Export to CSV** - Lineage reports and node lists
+- ✅ **Export to Excel** - Multi-sheet workbooks with analysis
+- ✅ **COBOL/JCL to Python** - Modern Python equivalents of legacy code
+
+### 🤖 AI-Powered Analysis (Requires API Key)
+- ✅ Natural language queries across all formats
+- ✅ Multi-step planning with 11 specialized tools
+- ✅ Complex reasoning and analysis
 - ✅ Conversational interface
 - ✅ Memory persistence across sessions
-- ✅ Audit logging and progress tracking
+- ✅ Full audit logging and progress tracking
 
 ---
 
@@ -192,11 +205,12 @@ See [docs/REALISTIC_SCENARIOS.md](docs/REALISTIC_SCENARIOS.md) for more examples
 ```
 
 ### What We Built (Unique Value)
-- **SSIS Parser** - Parse .dtsx XML into structured knowledge graphs
-- **Graph Tools** - Lineage tracing, impact analysis, dependency mapping
+- **Multi-Format Parsers** - SSIS, COBOL, JCL, JSON, Excel, CSV → Knowledge graphs
+- **11 Specialized Tools** - Lineage tracing, impact analysis, code generation
+- **Code Generators** - Export to JSON/CSV/Excel, COBOL/JCL to Python conversion
 - **Enterprise Middlewares** - Audit logging, memory persistence, progress tracking
-- **Memory Stores** - SQLite + FTS5 for conversations, ChromaDB/Pinecone for vectors
-- **Visualization** - Generate enterprise system diagrams (SVG/PNG)
+- **Memory Stores** - SQLite + FTS5 for conversations, ChromaDB for vectors
+- **Visualization** - Generate system diagrams (SVG/PNG with 4 layouts)
 
 ### What We Use from LangChain
 - **Vector Stores** - Chroma integration for semantic search

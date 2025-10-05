@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 # Load .env
 load_dotenv(Path(__file__).parent.parent / ".env")
 
-from enterprise_assistant.agents.enterprise_agent import create_enterprise_agent
+from traceai.agents.enterprise_agent import create_enterprise_agent
 
 print("🔧 Creating agent and loading mainframe files...")
 mainframe_dir = Path(__file__).parent / "sample_mainframe"

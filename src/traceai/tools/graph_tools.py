@@ -10,8 +10,8 @@ import networkx as nx
 from langchain_core.tools import BaseTool
 from pydantic import BaseModel, Field
 
-from enterprise_assistant.graph.queries import GraphQueries
-from enterprise_assistant.graph.schema import NodeType
+from traceai.graph.queries import GraphQueries
+from traceai.graph.schema import NodeType
 
 
 # Tool Input Schemas

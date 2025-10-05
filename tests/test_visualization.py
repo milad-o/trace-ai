@@ -5,9 +5,9 @@ from pathlib import Path
 import networkx as nx
 import pytest
 
-from enterprise_assistant.graph.builder import build_graph_from_documents
-from enterprise_assistant.parsers import parse_ssis
-from enterprise_assistant.tools.visualization_tools import create_graph_visualization_tool
+from traceai.graph.builder import build_graph_from_documents
+from traceai.parsers import parse_ssis
+from traceai.tools.visualization_tools import create_graph_visualization_tool
 
 
 @pytest.fixture

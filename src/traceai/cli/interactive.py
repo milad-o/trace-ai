@@ -10,8 +10,8 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
-from enterprise_assistant.agents import create_enterprise_agent
-from enterprise_assistant.logger import logger
+from traceai.agents import create_enterprise_agent
+from traceai.logger import logger
 
 # Load environment variables
 load_dotenv()
@@ -176,7 +176,7 @@ def _show_stats(agent):
         console.print("[yellow]No graph available[/yellow]")
         return
 
-    from enterprise_assistant.graph.queries import GraphQueries
+    from traceai.graph.queries import GraphQueries
 
     queries = GraphQueries(agent.graph)
     stats = queries.get_graph_stats()

@@ -22,7 +22,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.markdown import Markdown
 from rich.syntax import Syntax
 
-from enterprise_assistant.agents import create_enterprise_agent
+from traceai.agents import create_enterprise_agent
 
 console = Console()
 
@@ -219,7 +219,7 @@ Be thorough and systematic."""
 
     # Get conversation stats directly from the database
     try:
-        from enterprise_assistant.memory.conversation_store import SQLiteConversationStore
+        from traceai.memory.conversation_store import SQLiteConversationStore
         
         # Access the conversation store directly
         conv_store = SQLiteConversationStore(db_path=agent.persist_dir / "conversation.db")
