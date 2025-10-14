@@ -1,4 +1,4 @@
-"""Custom middleware for enterprise agent capabilities with persistent storage."""
+"""Custom middleware for TraceAI agent capabilities with persistent storage."""
 
 from pathlib import Path
 from typing import Any
@@ -363,7 +363,8 @@ class ProgressTrackingMiddleware(AgentMiddleware):
     """
     Middleware to track and display progress during multi-step operations.
 
-    Works with write_todos to show what step the agent is currently on.
+    Consumes DeepAgents' todos.json (created by write_todos tool) to show progress.
+    Does NOT manage todos itself - reads from state['files']['todos.json'].
     """
 
     def __init__(self, show_progress: bool = True):
@@ -374,43 +375,26 @@ class ProgressTrackingMiddleware(AgentMiddleware):
             show_progress: Whether to log progress updates (default: True)
         """
         self.show_progress = show_progress
-        self.current_step = 0
-        self.total_steps = 0
-        self.todos = []
+        self._last_completed_count = 0
+        self._last_total_count = 0
+        self._plan_announced = False
 
     def before_model(self, state: dict) -> dict | None:
         """
-        Track progress before model call.
+        Track progress before model call by reading DeepAgents' todos.json.
 
         Args:
-            state: Current agent state
+            state: Current agent state with state['files']['todos.json']
 
         Returns:
             None
         """
-        # Check if todos were created
-        files = state.get("files", {})
-
-        if "todos.json" in files:
-            import json
-
-            try:
-                todos_data = json.loads(files["todos.json"])
-                if isinstance(todos_data, list):
-                    self.todos = todos_data
-                    self.total_steps = len(todos_data)
-
-                    if self.show_progress:
-                        logger.info(f"[PROGRESS] Plan created with {self.total_steps} steps")
-
-            except json.JSONDecodeError:
-                pass
-
+        # No-op: We read todos in after_model to show progress after changes
         return None
 
     def after_model(self, state: dict) -> dict | None:
         """
-        Update progress after model execution.
+        Update progress after model execution by reading DeepAgents' todos.json.
 
         Args:
             state: Current agent state
@@ -418,26 +402,83 @@ class ProgressTrackingMiddleware(AgentMiddleware):
         Returns:
             Progress metadata
         """
-        messages = state.get("messages", [])
-
-        if messages and self.todos:
-            latest = messages[-1]
-
-            # Simple heuristic: if tool calls happened, increment step
-            if hasattr(latest, "tool_calls") and latest.tool_calls:
-                if self.current_step < self.total_steps:
-                    self.current_step += 1
-
-                    if self.show_progress:
-                        progress_pct = (self.current_step / self.total_steps) * 100
-                        logger.info(
-                            f"[PROGRESS] Step {self.current_step}/{self.total_steps} ({progress_pct:.0f}%)"
-                        )
-
-        return {
-            "progress_metadata": {
-                "current_step": self.current_step,
-                "total_steps": self.total_steps,
-                "progress_percentage": (self.current_step / self.total_steps * 100) if self.total_steps > 0 else 0,
+        # Read todos from DeepAgents' state
+        files = state.get("files", {})
+        
+        if "todos.json" not in files:
+            # No plan exists yet
+            return {
+                "progress_metadata": {
+                    "has_plan": False,
+                    "completed": 0,
+                    "total": 0,
+                    "progress_percentage": 0,
+                }
             }
-        }
+
+        import json
+
+        try:
+            todos_content = files["todos.json"]
+            todos = json.loads(todos_content) if isinstance(todos_content, str) else todos_content
+            
+            if not isinstance(todos, list):
+                return None
+
+            total = len(todos)
+            # Support both 'completed' and 'done' status
+            completed = sum(1 for todo in todos if todo.get("status") in ["completed", "done"])
+            in_progress_todos = [todo for todo in todos if todo.get("status") == "in-progress"]
+            
+            # Get title from either 'title' or 'content' field (DeepAgents uses 'content')
+            def get_todo_title(todo: dict) -> str:
+                return todo.get('title') or todo.get('content') or 'Untitled'
+            
+            # Announce plan creation (once)
+            if not self._plan_announced and total > 0 and self.show_progress:
+                logger.info(f"[PROGRESS] 📋 Plan created with {total} steps")
+                for i, todo in enumerate(todos, 1):
+                    status = todo.get("status", "not-started")
+                    status_emoji = "✅" if status in ["completed", "done"] else "⏳" if status == "in-progress" else "⭕"
+                    logger.info(f"[PROGRESS]   {i}. {status_emoji} {get_todo_title(todo)}")
+                self._plan_announced = True
+
+            # Show progress updates when status changes
+            if self.show_progress and (completed != self._last_completed_count or total != self._last_total_count):
+                if completed > self._last_completed_count:
+                    # A step was completed
+                    progress_pct = (completed / total * 100) if total > 0 else 0
+                    logger.info(f"[PROGRESS] ✅ {completed}/{total} steps complete ({progress_pct:.0f}%)")
+                
+                # Show current step
+                if in_progress_todos:
+                    current = in_progress_todos[0]
+                    logger.info(f"[PROGRESS] 🔄 Current: {get_todo_title(current)}")
+                elif completed == total and total > 0:
+                    logger.info(f"[PROGRESS] 🎉 All steps completed!")
+
+            self._last_completed_count = completed
+            self._last_total_count = total
+
+            return {
+                "progress_metadata": {
+                    "has_plan": True,
+                    "completed": completed,
+                    "total": total,
+                    "progress_percentage": (completed / total * 100) if total > 0 else 0,
+                    "in_progress": get_todo_title(in_progress_todos[0]) if in_progress_todos else None,
+                    "all_completed": completed == total and total > 0,
+                }
+            }
+
+        except (json.JSONDecodeError, KeyError, TypeError) as e:
+            logger.debug(f"[PROGRESS] Could not parse todos.json: {e}")
+            return {
+                "progress_metadata": {
+                    "has_plan": False,
+                    "completed": 0,
+                    "total": 0,
+                    "progress_percentage": 0,
+                    "error": str(e),
+                }
+            }

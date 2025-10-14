@@ -1,11 +1,27 @@
 # TraceAI
 
-An AI-powered ETL analysis tool that helps data teams understand complex data transformations, trace data lineage, and analyze the impact of changes across ETL processes.
+**Pluggable ETL Intelligence for DeepAgents** 🚀
+
+TraceAI provides domain-specific tools, knowledge graphs, and specialized sub-agents for ETL/lineage analysis. It's designed as a **capability plugin** that you can add to ANY DeepAgent system, not a standalone agent.
 
 [![Tests](https://img.shields.io/badge/tests-207%20total-brightgreen)](tests/)
 [![Docs](https://img.shields.io/badge/docs-complete-blue)](docs/)
 [![Python](https://img.shields.io/badge/python-3.12-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
+---
+
+## 🎯 What is TraceAI?
+
+TraceAI is a **capability module** that adds ETL/lineage analysis expertise to DeepAgents. Think of it as a plugin that provides:
+
+- ✅ **Domain Tools**: Lineage tracing, impact analysis, semantic search
+- ✅ **Knowledge Graph**: Parse SSIS/COBOL/JCL → NetworkX graph
+- ✅ **Vector Search**: Semantic search over enterprise documents
+- ✅ **Specialized Sub-Agents**: Search, lineage, code generation, parsing
+- ✅ **Custom Middleware**: Audit logging, memory, progress tracking
+
+**TraceAI provides domain expertise. DeepAgents provides orchestration. Together = Powerful!**
 
 ---
 
@@ -98,56 +114,74 @@ python examples/quick_demo.py
 
 ## 📖 Usage
 
+### Integration Pattern (Capability Plugin)
+
+```python
+import asyncio
+from deepagents import create_deep_agent
+from traceai.capabilities import TraceAICapability
+
+async def main():
+    # Initialize TraceAI capability
+    traceai_cap = TraceAICapability()
+    
+    # Load your ETL documents (SSIS/COBOL/JCL)
+    await traceai_cap.load_documents(
+        directory="./your_etl_packages",
+        pattern=["**/*.dtsx", "**/*.cbl", "**/*.jcl"]
+    )
+    
+    # Plug into your DeepAgent
+    agent = create_deep_agent(
+        model=llm,
+        tools=traceai_cap.get_tools(),           # ETL analysis tools
+        subagents=traceai_cap.get_subagents(),   # Optional specialists
+        middleware=traceai_cap.get_middleware(), # Custom middleware
+        instructions="""
+        You have ETL analysis capabilities from TraceAI:
+        - semantic_search: Find documents/components
+        - trace_lineage: Track data flows
+        - analyze_impact: Assess change impact
+        - graph_query: Query knowledge graph
+        """
+    )
+    
+    # Use natural language
+    response = await agent.arun("""
+    Analyze the CustomerETL pipeline:
+    1. Find all data sources
+    2. Trace lineage to target tables
+    3. Identify potential issues
+    """)
+    
+    print(response)
+
+asyncio.run(main())
+```
+
 ### Graph-Only Mode (No API Key)
 
 ```python
-from traceai.agents import EnterpriseAgent
+from traceai.capabilities import TraceAICapability
 from traceai.graph.queries import GraphQueries
 
-# Initialize agent (no API key needed)
-agent = EnterpriseAgent(model_provider="anthropic")
-agent.load_documents("./your_etl_packages")
+async def main():
+    # Initialize capability
+    traceai_cap = TraceAICapability()
+    await traceai_cap.load_documents("./your_etl_packages")
+    
+    # Direct graph queries (no LLM needed)
+    queries = GraphQueries(traceai_cap.graph)
+    
+    # Find tasks affected by table change
+    readers = queries.find_tasks_reading_from_table("Customer")
+    writers = queries.find_tasks_writing_to_table("Customer")
+    
+    print(f"⚠️  IMPACT: {len(readers) + len(writers)} tasks affected")
+    for task_id, task_data in readers + writers:
+        print(f"  - {task_data['name']}")
 
-# Query the knowledge graph
-queries = GraphQueries(agent.graph)
-
-# Find impact of changing a table
-readers = queries.find_tasks_reading_from_table("Customer")
-writers = queries.find_tasks_writing_to_table("Customer")
-
-print(f"⚠️  IMPACT: {len(readers) + len(writers)} tasks affected")
-for task_id, task_data in readers + writers:
-    print(f"  - {task_data['name']}")
-```
-
-### AI-Powered Mode (With API Key)
-
-```bash
-# Set your API key
-export ANTHROPIC_API_KEY=your_key_here
-# or
-export OPENAI_API_KEY=your_key_here
-```
-
-```python
-from traceai.agents import create_enterprise_agent
-
-# Initialize AI-powered agent
-agent = create_enterprise_agent(
-    documents_dir="./your_etl_packages",
-    model_provider="anthropic"  # or "openai"
-)
-
-# Natural language query with multi-step planning
-response = agent.analyze("""
-Analyze the CustomerETL package:
-1. List all tasks
-2. Trace data lineage
-3. Find potential issues
-4. Suggest improvements
-""")
-
-print(response)
+asyncio.run(main())
 ```
 
 ---
@@ -200,42 +234,57 @@ See [docs/REALISTIC_SCENARIOS.md](docs/REALISTIC_SCENARIOS.md) for more examples
 
 ## 🏗️ Architecture
 
-### Core Components
+### Plugin Architecture
 
 ```
-┌─────────────────────────────────────────┐
-│        LangChain Foundation             │
-│  • ChatAnthropic, ChatOpenAI           │
-│  • Chroma (vector storage)             │
-│  • HuggingFaceEmbeddings               │
-└─────────────────────────────────────────┘
-                  ↑
-                  │ Build on top
-                  │
-┌─────────────────────────────────────────┐
-│    Enterprise Assistant (Our Value)     │
-│                                         │
-│  ✅ SSIS Parser → Knowledge Graph      │
-│  ✅ Graph Tools (lineage, impact)      │
-│  ✅ Enterprise Middlewares              │
-│  ✅ Memory Stores (SQLite + Vector)    │
-│  ✅ Visualization Tools                 │
-└─────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                       YOUR APPLICATION                           │
+│                                                                   │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │                    DeepAgent System                        │ │
+│  │                                                            │ │
+│  │  Planning, Filesystem, Summarization (Auto-included)      │ │
+│  │                                                            │ │
+│  │  ┌────────────────────────────────────────────────────┐   │ │
+│  │  │        🔌 TraceAI Capability Plugin 🔌            │   │ │
+│  │  │                                                    │   │ │
+│  │  │  Tools: semantic_search, trace_lineage,          │   │ │
+│  │  │         analyze_impact, graph_query, ...         │   │ │
+│  │  │                                                    │   │ │
+│  │  │  Sub-Agents: search_specialist,                  │   │ │
+│  │  │              lineage_analyst,                     │   │ │
+│  │  │              code_generator,                      │   │ │
+│  │  │              parser_expert                        │   │ │
+│  │  │                                                    │   │ │
+│  │  │  Middleware: Audit, Memory, Progress             │   │ │
+│  │  └────────────────────────────────────────────────────┘   │ │
+│  └────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                   TraceAI Domain Knowledge                       │
+│  Knowledge Graph (NetworkX) + Vector Store (Chroma)             │
+│  Parsed Documents (SSIS/COBOL/JCL)                              │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### What We Built (Unique Value)
+### What TraceAI Provides (Domain Expertise)
 - **Multi-Format Parsers** - SSIS, COBOL, JCL, JSON, Excel, CSV → Knowledge graphs
 - **11 Specialized Tools** - Lineage tracing, impact analysis, code generation
+- **Knowledge Graph** - NetworkX graph of ETL components and data flows
+- **Vector Search** - Semantic search over enterprise documents
 - **Code Generators** - Export to JSON/CSV/Excel, COBOL/JCL to Python conversion
-- **Enterprise Middlewares** - Audit logging, memory persistence, progress tracking
-- **Memory Stores** - SQLite + FTS5 for conversations, ChromaDB for vectors
-- **Visualization** - Generate system diagrams (SVG/PNG with 4 layouts)
+- **Custom Middleware** - Audit logging, memory persistence, progress tracking
+- **Specialized Sub-Agents** - Search, lineage, code gen, parsing experts
 
-### What We Use from LangChain
-- **Vector Stores** - Chroma integration for semantic search
-- **Embeddings** - HuggingFaceEmbeddings for document indexing
-- **Chat Models** - ChatAnthropic, ChatOpenAI for AI reasoning
-- **Base Classes** - BaseTool, AgentMiddleware for extensibility
+### What DeepAgents Provides (Orchestration)
+- **Planning** - Multi-step task planning and execution
+- **Filesystem** - Read/write files during execution
+- **Sub-Agent Framework** - Delegation to specialized agents
+- **Summarization** - Context management
+- **Prompt Caching** - Efficient token usage
+
+**See [dev_docs/CAPABILITY_ARCHITECTURE.md](dev_docs/CAPABILITY_ARCHITECTURE.md) for detailed architecture.**
 
 ---
 
@@ -244,23 +293,23 @@ See [docs/REALISTIC_SCENARIOS.md](docs/REALISTIC_SCENARIOS.md) for more examples
 TraceAI now supports **async/concurrent processing** for massive performance gains:
 
 ```python
-from traceai.agents import AsyncEnterpriseAgent
 import asyncio
 
-async def main():
-    # Create async agent
-    agent = AsyncEnterpriseAgent(max_concurrent_parsers=20)
+from traceai.agents import TraceAI
 
-    # Load multiple directories concurrently
+
+async def main():
+    agent = TraceAI(max_concurrent_parsers=20)
+
     await asyncio.gather(
         agent.load_documents("./ssis_packages"),
         agent.load_documents("./cobol_programs"),
         agent.load_documents("./jcl_jobs"),
     )
 
-    # Query with streaming response
     async for chunk in agent.query_stream("Analyze the customer data flow"):
         print(chunk, end="", flush=True)
+
 
 asyncio.run(main())
 ```
@@ -272,8 +321,8 @@ python examples/scripts/async_vs_sync_demo.py
 
 | Mode | 100 Files | Speedup |
 |------|-----------|---------|
-| Sync | 45.2s | 1.0x |
-| Async | 4.8s | **9.4x** |
+| Sequential (await each load) | 45.2s | 1.0x |
+| Concurrent (await gather) | 4.8s | **9.4x** |
 
 **Benefits:**
 - ✅ **10x faster** document loading (concurrent parsing)
@@ -284,7 +333,7 @@ python examples/scripts/async_vs_sync_demo.py
 
 ## 📊 Performance
 
-### Sync Mode
+### Sequential Mode
 | Operation | Time | Notes |
 |-----------|------|-------|
 | Parse SSIS package | ~100ms | Per .dtsx file |
@@ -295,7 +344,7 @@ python examples/scripts/async_vs_sync_demo.py
 | AI simple query | 2-5s | With API key |
 | AI complex analysis | 10-30s | Multi-step planning |
 
-### Async Mode
+### Concurrent Mode
 | Operation | Time | Notes |
 |-----------|------|-------|
 | Parse 100 files | ~5s | **10x faster** with concurrency |

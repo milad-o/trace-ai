@@ -1,4 +1,4 @@
-"""Comprehensive API tests for AsyncEnterpriseAgent."""
+"""Comprehensive API tests for TraceAI."""
 
 import os
 from pathlib import Path
@@ -8,7 +8,7 @@ import asyncio
 
 import pytest
 
-from traceai.agents import AsyncEnterpriseAgent
+from traceai.agents import TraceAI
 from traceai.graph.queries import GraphQueries
 
 
@@ -56,8 +56,8 @@ def sample_jcl_dir():
     return Path(__file__).parent.parent / "examples" / "inputs" / "jcl"
 
 
-class TestAsyncEnterpriseAgentAPI:
-    """Test AsyncEnterpriseAgent API functionality."""
+class TestTraceAIAPI:
+    """Test TraceAI API functionality."""
 
     @pytest.mark.asyncio
     async def test_agent_initialization_no_api_key(self, temp_persist_dir):
@@ -66,7 +66,7 @@ class TestAsyncEnterpriseAgentAPI:
         old_openai = os.environ.pop("OPENAI_API_KEY", None)
 
         try:
-            agent = AsyncEnterpriseAgent(
+            agent = TraceAI(
                 model_provider="anthropic",
                 persist_dir=temp_persist_dir
             )
@@ -83,7 +83,7 @@ class TestAsyncEnterpriseAgentAPI:
     @pytest.mark.asyncio
     async def test_load_single_directory_async(self, temp_persist_dir, sample_ssis_dir):
         """Test loading documents asynchronously."""
-        agent = AsyncEnterpriseAgent(persist_dir=temp_persist_dir)
+        agent = TraceAI(persist_dir=temp_persist_dir)
         await agent.load_documents(sample_ssis_dir)
 
         assert agent.graph is not None
@@ -93,7 +93,7 @@ class TestAsyncEnterpriseAgentAPI:
     @pytest.mark.asyncio
     async def test_concurrent_loading(self, temp_persist_dir, sample_ssis_dir, sample_json_dir):
         """Test loading multiple directories concurrently."""
-        agent = AsyncEnterpriseAgent(
+        agent = TraceAI(
             persist_dir=temp_persist_dir,
             max_concurrent_parsers=10
         )
@@ -110,7 +110,7 @@ class TestAsyncEnterpriseAgentAPI:
     @pytest.mark.asyncio
     async def test_max_concurrent_parsers_configuration(self, temp_persist_dir):
         """Test configuring max concurrent parsers."""
-        agent = AsyncEnterpriseAgent(
+        agent = TraceAI(
             persist_dir=temp_persist_dir,
             max_concurrent_parsers=5
         )
@@ -120,7 +120,7 @@ class TestAsyncEnterpriseAgentAPI:
     @pytest.mark.asyncio
     async def test_graph_statistics_async(self, temp_persist_dir, sample_ssis_dir):
         """Test getting graph statistics from async agent."""
-        agent = AsyncEnterpriseAgent(persist_dir=temp_persist_dir)
+        agent = TraceAI(persist_dir=temp_persist_dir)
         await agent.load_documents(sample_ssis_dir)
 
         stats = agent.get_graph_stats()
@@ -136,7 +136,7 @@ class TestAsyncEnterpriseAgentAPI:
         if not os.getenv("ANTHROPIC_API_KEY") and not os.getenv("OPENAI_API_KEY"):
             pytest.skip("No API key available")
 
-        agent = AsyncEnterpriseAgent(persist_dir=temp_persist_dir)
+        agent = TraceAI(persist_dir=temp_persist_dir)
         await agent.load_documents(sample_ssis_dir)
 
         response = await agent.query("List all documents")
@@ -150,7 +150,7 @@ class TestAsyncEnterpriseAgentAPI:
         if not os.getenv("ANTHROPIC_API_KEY") and not os.getenv("OPENAI_API_KEY"):
             pytest.skip("No API key available")
 
-        agent = AsyncEnterpriseAgent(persist_dir=temp_persist_dir)
+        agent = TraceAI(persist_dir=temp_persist_dir)
         await agent.load_documents(sample_ssis_dir)
 
         chunks = []
@@ -163,7 +163,7 @@ class TestAsyncEnterpriseAgentAPI:
     @pytest.mark.asyncio
     async def test_vector_store_indexing_async(self, temp_persist_dir, sample_ssis_dir):
         """Test async vector store indexing."""
-        agent = AsyncEnterpriseAgent(persist_dir=temp_persist_dir)
+        agent = TraceAI(persist_dir=temp_persist_dir)
         await agent.load_documents(sample_ssis_dir)
 
         # Search should work
@@ -173,7 +173,7 @@ class TestAsyncEnterpriseAgentAPI:
     @pytest.mark.asyncio
     async def test_load_large_dataset_async(self, temp_persist_dir, sample_cobol_dir, sample_jcl_dir):
         """Test loading large dataset (many COBOL/JCL files) concurrently."""
-        agent = AsyncEnterpriseAgent(
+        agent = TraceAI(
             persist_dir=temp_persist_dir,
             max_concurrent_parsers=20
         )
@@ -189,13 +189,13 @@ class TestAsyncEnterpriseAgentAPI:
         assert agent.graph.number_of_nodes() > 50
 
 
-class TestAsyncEnterpriseAgentParsers:
+class TestTraceAIParsers:
     """Test all parsers work through async agent."""
 
     @pytest.mark.asyncio
     async def test_ssis_parser_async(self, temp_persist_dir, sample_ssis_dir):
         """Test SSIS parser async."""
-        agent = AsyncEnterpriseAgent(persist_dir=temp_persist_dir)
+        agent = TraceAI(persist_dir=temp_persist_dir)
         await agent.load_documents(sample_ssis_dir)
 
         assert len(agent.parsed_documents) == 2
@@ -204,7 +204,7 @@ class TestAsyncEnterpriseAgentParsers:
     @pytest.mark.asyncio
     async def test_json_parser_async(self, temp_persist_dir, sample_json_dir):
         """Test JSON parser async."""
-        agent = AsyncEnterpriseAgent(persist_dir=temp_persist_dir)
+        agent = TraceAI(persist_dir=temp_persist_dir)
         await agent.load_documents(sample_json_dir, pattern="*.json")
 
         assert len(agent.parsed_documents) > 0
@@ -213,7 +213,7 @@ class TestAsyncEnterpriseAgentParsers:
     @pytest.mark.asyncio
     async def test_csv_parser_async(self, temp_persist_dir, sample_csv_dir):
         """Test CSV parser async."""
-        agent = AsyncEnterpriseAgent(persist_dir=temp_persist_dir)
+        agent = TraceAI(persist_dir=temp_persist_dir)
         await agent.load_documents(sample_csv_dir, pattern="*.csv")
 
         assert len(agent.parsed_documents) > 0
@@ -221,7 +221,7 @@ class TestAsyncEnterpriseAgentParsers:
     @pytest.mark.asyncio
     async def test_excel_parser_async(self, temp_persist_dir, sample_excel_dir):
         """Test Excel parser async."""
-        agent = AsyncEnterpriseAgent(persist_dir=temp_persist_dir)
+        agent = TraceAI(persist_dir=temp_persist_dir)
         await agent.load_documents(sample_excel_dir, pattern="*.xlsx")
 
         assert len(agent.parsed_documents) > 0
@@ -229,7 +229,7 @@ class TestAsyncEnterpriseAgentParsers:
     @pytest.mark.asyncio
     async def test_cobol_parser_async(self, temp_persist_dir, sample_cobol_dir):
         """Test COBOL parser async."""
-        agent = AsyncEnterpriseAgent(persist_dir=temp_persist_dir)
+        agent = TraceAI(persist_dir=temp_persist_dir)
         await agent.load_documents(sample_cobol_dir, pattern="*.cbl")
 
         assert len(agent.parsed_documents) > 0
@@ -237,7 +237,7 @@ class TestAsyncEnterpriseAgentParsers:
     @pytest.mark.asyncio
     async def test_jcl_parser_async(self, temp_persist_dir, sample_jcl_dir):
         """Test JCL parser async."""
-        agent = AsyncEnterpriseAgent(persist_dir=temp_persist_dir)
+        agent = TraceAI(persist_dir=temp_persist_dir)
         await agent.load_documents(sample_jcl_dir, pattern="*.jcl")
 
         assert len(agent.parsed_documents) > 0
@@ -252,7 +252,7 @@ class TestAsyncEnterpriseAgentParsers:
         sample_excel_dir
     ):
         """Test loading all parser types concurrently."""
-        agent = AsyncEnterpriseAgent(
+        agent = TraceAI(
             persist_dir=temp_persist_dir,
             max_concurrent_parsers=20
         )
@@ -273,7 +273,7 @@ class TestAsyncEnterpriseAgentParsers:
         assert len(agent.parsed_documents) >= 4
 
 
-class TestAsyncEnterpriseAgentPerformance:
+class TestTraceAIPerformance:
     """Test performance characteristics of async agent."""
 
     @pytest.mark.asyncio
@@ -288,7 +288,7 @@ class TestAsyncEnterpriseAgentPerformance:
         import time
 
         # Sequential
-        agent_seq = AsyncEnterpriseAgent(persist_dir=temp_persist_dir / "seq")
+        agent_seq = TraceAI(persist_dir=temp_persist_dir / "seq")
         start = time.time()
         await agent_seq.load_documents(sample_ssis_dir)
         await agent_seq.load_documents(sample_json_dir, pattern="*.json")
@@ -296,7 +296,7 @@ class TestAsyncEnterpriseAgentPerformance:
         sequential_time = time.time() - start
 
         # Concurrent
-        agent_conc = AsyncEnterpriseAgent(persist_dir=temp_persist_dir / "conc")
+        agent_conc = TraceAI(persist_dir=temp_persist_dir / "conc")
         start = time.time()
         await asyncio.gather(
             agent_conc.load_documents(sample_ssis_dir),

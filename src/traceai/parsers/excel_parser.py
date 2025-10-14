@@ -135,7 +135,7 @@ class ExcelParser(BaseParser):
         return DocumentMetadata(
             name=file_path.stem,
             document_id=f"excel_{file_path.stem}",
-            document_type=self.document_type(),
+            document_type=self.document_type,
             description=props.description if props else None,
             version=props.version if props else None,
             creator=props.creator if props else None,

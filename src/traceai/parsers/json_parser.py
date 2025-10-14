@@ -112,7 +112,7 @@ class JSONParser(BaseParser):
         return DocumentMetadata(
             name=name,
             document_id=document_id,
-            document_type=self.document_type(),
+            document_type=self.document_type,
             description=data.get("description"),
             version=data.get("version"),
             creator=data.get("author") or data.get("creator"),

@@ -1,6 +1,6 @@
-"""Interactive CLI for TraceAI using the deep agent."""
+"""Interactive CLI for TraceAI using the async-first agent."""
 
-import os
+import asyncio
 from pathlib import Path
 
 import click
@@ -10,7 +10,7 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
-from traceai.agents import create_enterprise_agent
+from traceai.agents import TraceAI
 from traceai.logger import logger
 
 # Load environment variables
@@ -47,7 +47,7 @@ def analyze(documents_dir: Path, model: str, model_name: str):
         task = progress.add_task("Loading documents and initializing agent...", total=None)
 
         try:
-            agent = create_enterprise_agent(documents_dir=documents_dir, model_provider=model, model_name=model_name)
+            agent = _create_traceai_agent(documents_dir, model, model_name)
 
             progress.update(task, description="[green]✓ Agent ready!")
 
@@ -96,7 +96,7 @@ def analyze(documents_dir: Path, model: str, model_name: str):
 
             # Process query with agent
             with console.status("[bold green]Agent thinking...", spinner="dots"):
-                response = agent.analyze(query)
+                response = asyncio.run(agent.query(query))
 
             # Display response
             console.print("\n[bold green]🤖 Agent:[/bold green]")
@@ -127,11 +127,10 @@ def ask(documents_dir: Path, query: str, model: str, model_name: str):
     """
     with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console) as progress:
         task = progress.add_task("Initializing...", total=None)
-
-        agent = create_enterprise_agent(documents_dir=documents_dir, model_provider=model, model_name=model_name)
+        agent = _create_traceai_agent(documents_dir, model, model_name)
 
         progress.update(task, description="Analyzing...")
-        response = agent.analyze(query)
+        response = asyncio.run(agent.query(query))
 
     console.print("\n[bold cyan]Question:[/bold cyan]", query)
     console.print("\n[bold green]Answer:[/bold green]")
@@ -199,6 +198,13 @@ def _show_stats(agent):
     stats_text += f"\n## Vector Store\n- **Indexed Items:** {vs_stats['total_items']}\n"
 
     console.print(Panel(Markdown(stats_text), title="Statistics", border_style="cyan"))
+
+
+def _create_traceai_agent(documents_dir: Path, model: str, model_name: str) -> TraceAI:
+    """Create and initialize a TraceAI agent synchronously."""
+    agent = TraceAI(model_provider=model, model_name=model_name, persist_dir=Path("./.traceai"))
+    asyncio.run(agent.load_documents(documents_dir))
+    return agent
 
 
 @cli.command()

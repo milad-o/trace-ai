@@ -3,13 +3,14 @@
 These tests require an API key and test end-to-end workflows.
 """
 
+import asyncio
 import os
 import tempfile
 from pathlib import Path
 
 import pytest
 
-from traceai.agents import EnterpriseAgent, AsyncEnterpriseAgent
+from traceai.agents import TraceAI
 
 
 # Skip all tests if no API key
@@ -37,7 +38,7 @@ def agent_with_ai():
     with tempfile.TemporaryDirectory() as temp_dir:
         model_provider = "anthropic" if os.getenv("ANTHROPIC_API_KEY") else "openai"
 
-        agent = EnterpriseAgent(
+        agent = TraceAI(
             model_provider=model_provider,
             persist_dir=temp_dir,
             enable_memory=True,
@@ -48,7 +49,7 @@ def agent_with_ai():
         # Load sample data
         ssis_dir = Path(__file__).parent.parent / "examples" / "inputs" / "ssis"
         if ssis_dir.exists():
-            agent.load_documents(ssis_dir)
+            asyncio.run(agent.load_documents(ssis_dir))
 
         yield agent
 
@@ -60,8 +61,7 @@ class TestAIBasicQueries:
         """Test agent can answer a simple question about loaded data."""
         if not agent_with_ai.agent:
             pytest.skip("Agent not created (no data loaded)")
-
-        response = agent_with_ai.query("How many documents are loaded?")
+        response = asyncio.run(agent_with_ai.query("How many documents are loaded?"))
 
         assert isinstance(response, str)
         assert len(response) > 0
@@ -72,8 +72,7 @@ class TestAIBasicQueries:
         """Test agent can list documents."""
         if not agent_with_ai.agent:
             pytest.skip("Agent not created")
-
-        response = agent_with_ai.query("List all documents")
+        response = asyncio.run(agent_with_ai.query("List all documents"))
 
         assert isinstance(response, str)
         assert len(response) > 0
@@ -84,8 +83,7 @@ class TestAIBasicQueries:
         """Test agent can describe the graph structure."""
         if not agent_with_ai.agent:
             pytest.skip("Agent not created")
-
-        response = agent_with_ai.query("What is the structure of the loaded data?")
+        response = asyncio.run(agent_with_ai.query("What is the structure of the loaded data?"))
 
         assert isinstance(response, str)
         assert len(response) > 10
@@ -100,8 +98,7 @@ class TestAIDataLineage:
         """Test agent can trace data lineage."""
         if not agent_with_ai.agent:
             pytest.skip("Agent not created")
-
-        response = agent_with_ai.query("Trace the lineage of the Customer table")
+        response = asyncio.run(agent_with_ai.query("Trace the lineage of the Customer table"))
 
         assert isinstance(response, str)
         assert len(response) > 0
@@ -112,8 +109,7 @@ class TestAIDataLineage:
         """Test agent can find data sources."""
         if not agent_with_ai.agent:
             pytest.skip("Agent not created")
-
-        response = agent_with_ai.query("What data sources are in the CustomerETL package?")
+        response = asyncio.run(agent_with_ai.query("What data sources are in the CustomerETL package?"))
 
         assert isinstance(response, str)
         assert len(response) > 0
@@ -129,9 +125,9 @@ class TestAIImpactAnalysis:
         if not agent_with_ai.agent:
             pytest.skip("Agent not created")
 
-        response = agent_with_ai.query(
+        response = asyncio.run(agent_with_ai.query(
             "What would be impacted if I change the Customer table schema?"
-        )
+        ))
 
         assert isinstance(response, str)
         assert len(response) > 0
@@ -142,8 +138,7 @@ class TestAIImpactAnalysis:
         """Test agent can find dependencies."""
         if not agent_with_ai.agent:
             pytest.skip("Agent not created")
-
-        response = agent_with_ai.query("What tasks depend on each other in CustomerETL?")
+        response = asyncio.run(agent_with_ai.query("What tasks depend on each other in CustomerETL?"))
 
         assert isinstance(response, str)
         assert len(response) > 0
@@ -158,13 +153,12 @@ class TestAIMultiStepReasoning:
         """Test agent can perform multi-step analysis."""
         if not agent_with_ai.agent:
             pytest.skip("Agent not created")
-
-        response = agent_with_ai.query("""
+        response = asyncio.run(agent_with_ai.query("""
         Analyze the CustomerETL package:
         1. List all tasks
         2. Identify data sources
         3. Trace data flow
-        """)
+        """))
 
         assert isinstance(response, str)
         assert len(response) > 50  # Should be a detailed response
@@ -174,9 +168,9 @@ class TestAIMultiStepReasoning:
         if not agent_with_ai.agent:
             pytest.skip("Agent not created")
 
-        response = agent_with_ai.query(
+        response = asyncio.run(agent_with_ai.query(
             "Which ETL package processes customer data and what transformations does it perform?"
-        )
+        ))
 
         assert isinstance(response, str)
         assert len(response) > 0
@@ -191,8 +185,7 @@ class TestAISemanticSearch:
         """Test agent can perform semantic search."""
         if not agent_with_ai.agent:
             pytest.skip("Agent not created")
-
-        response = agent_with_ai.query("Find all components related to customer data processing")
+        response = asyncio.run(agent_with_ai.query("Find all components related to customer data processing"))
 
         assert isinstance(response, str)
         assert len(response) > 0
@@ -203,8 +196,7 @@ class TestAISemanticSearch:
         """Test agent uses vector search for semantic queries."""
         if not agent_with_ai.agent:
             pytest.skip("Agent not created")
-
-        response = agent_with_ai.query("What does the ETL do with sales information?")
+        response = asyncio.run(agent_with_ai.query("What does the ETL do with sales information?"))
 
         assert isinstance(response, str)
         assert len(response) > 0
@@ -221,11 +213,11 @@ class TestAIConversationalMemory:
             pytest.skip("Agent not created or memory disabled")
 
         # First question
-        response1 = agent_with_ai.query("What is the CustomerETL package?")
+        response1 = asyncio.run(agent_with_ai.query("What is the CustomerETL package?"))
         assert len(response1) > 0
 
         # Follow-up question (without mentioning CustomerETL)
-        response2 = agent_with_ai.query("What tasks does it have?")
+        response2 = asyncio.run(agent_with_ai.query("What tasks does it have?"))
 
         assert len(response2) > 0
         # Should understand "it" refers to CustomerETL
@@ -243,7 +235,7 @@ class TestAsyncAIIntegration:
         with tempfile.TemporaryDirectory() as temp_dir:
             model_provider = "anthropic" if os.getenv("ANTHROPIC_API_KEY") else "openai"
 
-            agent = AsyncEnterpriseAgent(
+            agent = TraceAI(
                 model_provider=model_provider,
                 persist_dir=temp_dir
             )
@@ -266,7 +258,7 @@ class TestAsyncAIIntegration:
         with tempfile.TemporaryDirectory() as temp_dir:
             model_provider = "anthropic" if os.getenv("ANTHROPIC_API_KEY") else "openai"
 
-            agent = AsyncEnterpriseAgent(
+            agent = TraceAI(
                 model_provider=model_provider,
                 persist_dir=temp_dir
             )
@@ -293,7 +285,7 @@ class TestAIToolUsage:
             pytest.skip("Agent not created")
 
         # This question should trigger graph tool usage
-        response = agent_with_ai.query("Show me graph statistics")
+        response = asyncio.run(agent_with_ai.query("Show me graph statistics"))
 
         assert isinstance(response, str)
         assert len(response) > 0
@@ -306,7 +298,7 @@ class TestAIToolUsage:
             pytest.skip("Agent not created")
 
         # This should trigger semantic search
-        response = agent_with_ai.query("Search for customer-related components")
+        response = asyncio.run(agent_with_ai.query("Search for customer-related components"))
 
         assert isinstance(response, str)
         assert len(response) > 0
@@ -320,7 +312,7 @@ class TestAIErrorHandling:
         if not agent_with_ai.agent:
             pytest.skip("Agent not created")
 
-        response = agent_with_ai.query("asdfghjkl qwerty zxcvbn")
+        response = asyncio.run(agent_with_ai.query("asdfghjkl qwerty zxcvbn"))
 
         # Should get some response (not crash)
         assert isinstance(response, str)
@@ -330,7 +322,7 @@ class TestAIErrorHandling:
         if not agent_with_ai.agent:
             pytest.skip("Agent not created")
 
-        response = agent_with_ai.query("Tell me about the NonExistentTable")
+        response = asyncio.run(agent_with_ai.query("Tell me about the NonExistentTable"))
 
         # Should indicate it doesn't exist or no information found
         assert isinstance(response, str)

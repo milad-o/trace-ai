@@ -1,11 +1,12 @@
 """Comprehensive summary test - validates all major components work."""
 
+import asyncio
 import tempfile
 from pathlib import Path
 
 import pytest
 
-from traceai.agents import EnterpriseAgent, AsyncEnterpriseAgent
+from traceai.agents import TraceAI
 from traceai.graph.queries import GraphQueries
 from traceai.parsers import parser_registry
 
@@ -23,16 +24,16 @@ class TestComprehensiveSummary:
         assert parser_registry.get_parser_for_file(Path("test.cbl")) is not None   # COBOL
         assert parser_registry.get_parser_for_file(Path("test.jcl")) is not None   # JCL
 
-    def test_sync_agent_end_to_end(self):
-        """Test sync agent end-to-end workflow."""
+    def test_traceai_end_to_end_sync(self):
+        """Test TraceAI workflow using synchronous orchestration."""
         with tempfile.TemporaryDirectory() as temp_dir:
             # 1. Create agent
-            agent = EnterpriseAgent(persist_dir=temp_dir)
+            agent = TraceAI(persist_dir=temp_dir)
 
             # 2. Load documents
             ssis_dir = Path(__file__).parent.parent / "examples" / "inputs" / "ssis"
             if ssis_dir.exists():
-                agent.load_documents(ssis_dir)
+                asyncio.run(agent.load_documents(ssis_dir))
 
                 # 3. Verify graph was built
                 assert agent.graph is not None
@@ -58,14 +59,11 @@ class TestComprehensiveSummary:
                 assert len(results) > 0
 
     @pytest.mark.asyncio
-    async def test_async_agent_end_to_end(self):
-        """Test async agent end-to-end workflow."""
+    async def test_traceai_end_to_end_async(self):
+        """Test TraceAI workflow using native async operations."""
         with tempfile.TemporaryDirectory() as temp_dir:
             # 1. Create async agent
-            agent = AsyncEnterpriseAgent(
-                persist_dir=temp_dir,
-                max_concurrent_parsers=10
-            )
+            agent = TraceAI(persist_dir=temp_dir, max_concurrent_parsers=10)
 
             # 2. Load documents asynchronously
             ssis_dir = Path(__file__).parent.parent / "examples" / "inputs" / "ssis"
@@ -119,11 +117,11 @@ class TestComprehensiveSummary:
     def test_graph_tools_available(self):
         """Test graph tools can be created."""
         with tempfile.TemporaryDirectory() as temp_dir:
-            agent = EnterpriseAgent(persist_dir=temp_dir)
+            agent = TraceAI(persist_dir=temp_dir)
 
             ssis_dir = Path(__file__).parent.parent / "examples" / "inputs" / "ssis"
             if ssis_dir.exists():
-                agent.load_documents(ssis_dir)
+                asyncio.run(agent.load_documents(ssis_dir))
 
                 from traceai.tools import create_graph_tools, create_graph_visualization_tool
 
@@ -137,11 +135,11 @@ class TestComprehensiveSummary:
     def test_code_generation_tools_available(self):
         """Test code generation tools can be instantiated."""
         with tempfile.TemporaryDirectory() as temp_dir:
-            agent = EnterpriseAgent(persist_dir=temp_dir)
+            agent = TraceAI(persist_dir=temp_dir)
 
             ssis_dir = Path(__file__).parent.parent / "examples" / "inputs" / "ssis"
             if ssis_dir.exists():
-                agent.load_documents(ssis_dir)
+                asyncio.run(agent.load_documents(ssis_dir))
 
                 from traceai.tools.code_generation_tools import (
                     GenerateJSONTool,
@@ -161,7 +159,7 @@ class TestComprehensiveSummary:
                 assert excel_tool.name == "generate_excel"
 
                 python_tool = GeneratePythonTool()
-                assert python_tool.name == "generate_python"
+                assert python_tool.name == "generate_python_from_cobol"
 
     def test_export_formats_work(self):
         """Test all export formats can be generated."""
@@ -170,11 +168,11 @@ class TestComprehensiveSummary:
         from openpyxl import load_workbook
 
         with tempfile.TemporaryDirectory() as temp_dir:
-            agent = EnterpriseAgent(persist_dir=temp_dir)
+            agent = TraceAI(persist_dir=temp_dir)
 
             ssis_dir = Path(__file__).parent.parent / "examples" / "inputs" / "ssis"
             if ssis_dir.exists():
-                agent.load_documents(ssis_dir)
+                asyncio.run(agent.load_documents(ssis_dir))
 
                 from traceai.tools.code_generation_tools import (
                     GenerateJSONTool,

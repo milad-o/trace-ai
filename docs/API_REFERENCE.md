@@ -1,158 +1,14 @@
 # TraceAI API Reference
+### TraceAI
 
-Complete API reference for all TraceAI components.
+**Path**: `traceai.agents.TraceAI`
 
----
-
-## Table of Contents
-
-- [Agents](#agents)
-  - [EnterpriseAgent](#enterpriseagent)
-  - [AsyncEnterpriseAgent](#asyncenterpriseagent)
-- [Parsers](#parsers)
-  - [SSISParser](#ssisparser)
-  - [JSONParser](#jsonparser)
-  - [CSVParser](#csvparser)
-  - [ExcelParser](#excelparser)
-  - [COBOLParser](#cobolparser)
-  - [JCLParser](#jclparser)
-- [Graph](#graph)
-  - [GraphQueries](#graphqueries)
-  - [Graph Builder](#graph-builder)
-- [Tools](#tools)
-  - [Graph Tools](#graph-tools)
-  - [Code Generation Tools](#code-generation-tools)
-  - [Visualization Tools](#visualization-tools)
-- [Data Models](#data-models)
-- [Middlewares](#middlewares)
-
----
-
-## Agents
-
-### EnterpriseAgent
-
-**Path**: `traceai.agents.EnterpriseAgent`
-
-Synchronous intelligent agent for enterprise document analysis.
+Async-first intelligent agent that powers the entire TraceAI platform. Provides concurrent document parsing, semantic search, graph tooling, and LLM-backed reasoning in a single interface.
 
 #### Constructor
 
 ```python
-EnterpriseAgent(
-    model_provider: str = "anthropic",
-    model_name: str | None = None,
-    persist_dir: Path | str = "./examples/outputs/data",
-    enable_memory: bool = True,
-    enable_audit: bool = True,
-    enable_progress: bool = True,
-    max_conversation_messages: int = 30
-)
-```
-
-**Parameters**:
-- `model_provider` (str): LLM provider - "anthropic" or "openai"
-- `model_name` (str | None): Specific model name (e.g., "claude-3-5-sonnet-20241022", "gpt-4o-mini")
-- `persist_dir` (Path | str): Directory for persisting vector store and data
-- `enable_memory` (bool): Enable conversation memory middleware
-- `enable_audit` (bool): Enable audit logging middleware
-- `enable_progress` (bool): Enable progress tracking middleware
-- `max_conversation_messages` (int): Maximum messages to keep in conversation memory
-
-**Attributes**:
-- `graph` (nx.DiGraph | None): Knowledge graph built from parsed documents
-- `vector_store` (Chroma): Vector store for semantic search
-- `parsed_documents` (list): List of ParsedDocument objects
-- `llm` (ChatAnthropic | ChatOpenAI | None): LLM instance (None if no API key)
-- `agent`: Deep agent instance (None if no LLM or documents not loaded)
-
-#### Methods
-
-##### load_documents
-
-```python
-def load_documents(
-    directory: Path | str,
-    pattern: str | list[str] = "**/*.dtsx"
-) -> None
-```
-
-Load and parse documents from a directory.
-
-**Parameters**:
-- `directory` (Path | str): Directory containing documents
-- `pattern` (str | list[str]): Glob pattern(s) for file matching
-
-**Example**:
-```python
-agent = EnterpriseAgent()
-
-# Load single format
-agent.load_documents("./packages", pattern="*.dtsx")
-
-# Load multiple formats
-agent.load_documents("./files", pattern=["*.json", "*.csv", "*.xlsx"])
-```
-
-##### analyze
-
-```python
-def analyze(query: str) -> str
-```
-
-Query the agent with natural language (requires API key).
-
-**Parameters**:
-- `query` (str): Natural language question or request
-
-**Returns**:
-- `str`: Agent's response
-
-**Raises**:
-- `ValueError`: If agent not initialized (no documents loaded or no API key)
-
-**Example**:
-```python
-response = agent.analyze("What data transformations are in CustomerETL?")
-print(response)
-```
-
-##### analyze_stream
-
-```python
-def analyze_stream(
-    query: str,
-    stream_mode: str = "values"
-) -> Iterator
-```
-
-Query the agent with streaming response.
-
-**Parameters**:
-- `query` (str): Natural language question
-- `stream_mode` (str): Streaming mode ("values", "updates", "messages")
-
-**Returns**:
-- Iterator yielding response chunks
-
-**Example**:
-```python
-for chunk in agent.analyze_stream("Analyze the data flow"):
-    print(chunk, end="", flush=True)
-```
-
----
-
-### AsyncEnterpriseAgent
-
-**Path**: `traceai.agents.AsyncEnterpriseAgent`
-
-Asynchronous agent for concurrent document processing (10x faster).
-
-#### Constructor
-
-```python
-AsyncEnterpriseAgent(
+TraceAI(
     model_provider: str = "anthropic",
     model_name: str | None = None,
     persist_dir: Path | str = "./examples/outputs/data",
@@ -164,10 +20,22 @@ AsyncEnterpriseAgent(
 )
 ```
 
-**Parameters**: Same as EnterpriseAgent, plus:
-- `max_concurrent_parsers` (int): Maximum concurrent file parsing operations
+**Parameters**:
+- `model_provider` (str): LLM provider - "anthropic" or "openai"
+- `model_name` (str | None): Override default model name.
+- `persist_dir` (Path | str): Directory for persisting vector store and cache data.
+- `enable_memory` (bool): Enable conversation memory middleware for follow-up context.
+- `enable_audit` (bool): Enable audit logging middleware.
+- `enable_progress` (bool): Enable progress tracking middleware.
+- `max_conversation_messages` (int): Maximum messages to retain in memory.
+- `max_concurrent_parsers` (int): Maximum concurrent parsing operations.
 
-**Attributes**: Same as EnterpriseAgent
+**Attributes**:
+- `graph` (nx.DiGraph | None): Knowledge graph built from parsed documents.
+- `vector_store` (Chroma): Persistent semantic search index.
+- `parsed_documents` (list): List of parsed document objects with metadata/components.
+- `llm` (ChatAnthropic | ChatOpenAI | None): Backing LLM client (None when no API key).
+- `agent`: DeepAgents-based orchestrator created after documents load.
 
 #### Methods
 
@@ -180,21 +48,17 @@ async def load_documents(
 ) -> None
 ```
 
-Load and parse documents concurrently.
+Load and parse documents concurrently. Accepts a single glob pattern or a list of patterns.
 
 **Example**:
 ```python
-agent = AsyncEnterpriseAgent(max_concurrent_parsers=20)
+agent = TraceAI(max_concurrent_parsers=20)
 
-# Load single directory
-await agent.load_documents("./packages")
+await agent.load_documents("./examples/inputs/ssis")
+await agent.load_documents("./examples/inputs/json", pattern="*.json")
 
-# Load multiple directories concurrently
-await asyncio.gather(
-    agent.load_documents("./ssis"),
-    agent.load_documents("./cobol"),
-    agent.load_documents("./jcl")
-)
+stats = agent.get_graph_stats()
+print(stats)
 ```
 
 ##### query
@@ -203,8 +67,76 @@ await asyncio.gather(
 async def query(question: str) -> str
 ```
 
-Query the agent asynchronously.
+Execute a natural-language question using the graph, semantic search, and LLM toolchain.
 
+**Raises**:
+- `ValueError`: If documents are not loaded or no LLM is configured.
+
+**Example**:
+```python
+answer = await agent.query("Trace the lineage for the Customer table")
+print(answer)
+```
+
+##### query_stream
+
+```python
+async def query_stream(question: str) -> AsyncIterator[str]
+```
+
+Stream the response incrementally for UI or CLI use.
+
+**Example**:
+```python
+async for chunk in agent.query_stream("List key metrics for SalesETL"):
+    print(chunk, end="")
+```
+
+##### get_graph_stats
+
+```python
+def get_graph_stats() -> dict[str, Any]
+```
+
+Return aggregate statistics about the knowledge graph (nodes, edges, components, etc.).
+
+##### vector_store
+
+TraceAI exposes a `vector_store` attribute (Chroma) for advanced semantic search or downstream tooling.
+
+**Example**:
+```python
+results = agent.vector_store.similarity_search("customer lineage", k=5)
+for doc in results:
+    print(doc.page_content)
+```
+
+##### parsed_documents
+
+List of parsed document objects with metadata, components, and data sources. Useful for building custom reports.
+
+##### Example End-to-End Workflow
+
+```python
+import asyncio
+from traceai.agents import TraceAI
+
+
+async def main():
+    agent = TraceAI(persist_dir="./.traceai", max_concurrent_parsers=15)
+    await agent.load_documents("./examples/inputs/ssis")
+
+    stats = agent.get_graph_stats()
+    print(stats)
+
+    answer = await agent.query("Which packages load customer data?")
+    print(answer)
+
+
+asyncio.run(main())
+```
+
+---
 **Parameters**:
 - `question` (str): Natural language question
 
@@ -1001,36 +933,23 @@ ProgressTrackingMiddleware()
 
 ---
 
-## Helper Functions
+## Helper Patterns
 
-### create_enterprise_agent
-
-**Path**: `traceai.agents.create_enterprise_agent`
+### Quick TraceAI Setup
 
 ```python
-def create_enterprise_agent(
-    documents_dir: str | Path,
-    model_provider: str = "anthropic",
-    model_name: str | None = None,
-    persist_dir: str | Path = "./examples/outputs/data",
-    pattern: str | list[str] = "**/*.dtsx"
-) -> EnterpriseAgent
+import asyncio
+from pathlib import Path
+from traceai.agents import TraceAI
+
+
+async def bootstrap_agent() -> TraceAI:
+    agent = TraceAI(persist_dir=Path("./.traceai"))
+    await agent.load_documents("./examples/inputs/ssis")
+    return agent
 ```
 
-Convenience function to create and initialize an agent.
-
-**Example**:
-```python
-from traceai.agents import create_enterprise_agent
-
-agent = create_enterprise_agent(
-    documents_dir="./packages",
-    model_provider="anthropic",
-    pattern=["*.dtsx", "*.json"]
-)
-
-response = agent.analyze("What transformations are in CustomerETL?")
-```
+Use this pattern to spin up a TraceAI instance wherever synchronous helpers used to exist.
 
 ---
 
@@ -1122,7 +1041,7 @@ TOKENIZERS_PARALLELISM=false
 
 ## Performance Tips
 
-1. **Use AsyncEnterpriseAgent** for loading 10+ files
+1. **Leverage TraceAI's concurrency** for loading 10+ files
 2. **Set max_concurrent_parsers** based on CPU cores (default: 10)
 3. **Use specific patterns** instead of `**/*` for faster globbing
 4. **Enable only needed middlewares** to reduce overhead
@@ -1131,7 +1050,7 @@ TOKENIZERS_PARALLELISM=false
 **Example**:
 ```python
 # Good: Fast for large datasets
-agent = AsyncEnterpriseAgent(
+agent = TraceAI(
     max_concurrent_parsers=20,
     enable_progress=False  # Disable if not needed
 )
@@ -1149,12 +1068,12 @@ await asyncio.gather(
 
 ```python
 import asyncio
-from traceai.agents import AsyncEnterpriseAgent
+from traceai.agents import TraceAI
 from traceai.graph.queries import GraphQueries
 
 async def main():
     # 1. Create async agent
-    agent = AsyncEnterpriseAgent(
+    agent = TraceAI(
         model_provider="anthropic",
         max_concurrent_parsers=20
     )

@@ -31,7 +31,7 @@ class CSVParser(BaseParser):
     @property
     def supported_extensions(self) -> list[str]:
         """Returns list of supported file extensions."""
-        return [".csv", ".tsv"]
+        return [".csv"]
 
     @property
     def document_type(self) -> DocumentType:
@@ -99,7 +99,7 @@ class CSVParser(BaseParser):
         return DocumentMetadata(
             name=file_path.stem,
             document_id=f"csv_{file_path.stem}",
-            document_type=self.document_type(),
+            document_type=self.document_type,
             description=f"CSV file with {len(df)} rows",
             file_path=file_path,
             custom_attributes={

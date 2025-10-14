@@ -5,6 +5,8 @@ from traceai.tools.graph_tools import (
     GraphQueryTool,
     ImpactAnalysisTool,
     LineageTracerTool,
+    PackageCatalogTool,
+    PackageSummaryTool,
     create_graph_tools,
 )
 from traceai.tools.visualization_tools import create_graph_visualization_tool
@@ -20,6 +22,8 @@ __all__ = [
     "LineageTracerTool",
     "ImpactAnalysisTool",
     "DependencySearchTool",
+    "PackageCatalogTool",
+    "PackageSummaryTool",
     "create_graph_tools",
     "create_graph_visualization_tool",
     "GenerateJSONTool",

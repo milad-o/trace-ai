@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+import networkx as nx
 import pandas as pd
 from langchain.tools import BaseTool
 from openpyxl import Workbook
@@ -55,7 +56,10 @@ class GenerateJSONTool(BaseTool):
     args_schema: type[BaseModel] = GenerateJSONInput
     queries: GraphQueries
 
-    def __init__(self, queries: GraphQueries):
+    def __init__(self, queries: GraphQueries | nx.DiGraph):
+        # Accept both GraphQueries and raw DiGraph for flexibility
+        if isinstance(queries, nx.DiGraph):
+            queries = GraphQueries(queries)
         super().__init__(queries=queries)
 
     def _run(
@@ -103,10 +107,11 @@ class GenerateJSONTool(BaseTool):
 
             edges.append(edge_info)
 
-        # Create export structure
+        # Create export structure (tests expect nodes/edges at top level + metadata)
         export_data = {
-            "graph": {"nodes": nodes, "edges": edges},
-            "statistics": {
+            "nodes": nodes,
+            "edges": edges,
+            "metadata": {
                 "total_nodes": len(nodes),
                 "total_edges": len(edges),
                 "node_types": self._count_node_types(nodes),
@@ -120,7 +125,7 @@ class GenerateJSONTool(BaseTool):
         with open(output_file, "w", encoding="utf-8") as f:
             json.dump(export_data, f, indent=2)
 
-        return f"✅ JSON export saved to {output_path}\n" f"📊 {len(nodes)} nodes, {len(edges)} edges"
+        return f"✅ JSON export successfully saved to {output_path}\n📊 {len(nodes)} nodes, {len(edges)} edges"
 
     def _count_node_types(self, nodes: list[dict]) -> dict[str, int]:
         """Counts nodes by type."""
@@ -161,10 +166,13 @@ class GenerateCSVTool(BaseTool):
     args_schema: type[BaseModel] = GenerateCSVInput
     queries: GraphQueries
 
-    def __init__(self, queries: GraphQueries):
+    def __init__(self, queries: GraphQueries | nx.DiGraph):
+        # Accept both GraphQueries and raw DiGraph for flexibility
+        if isinstance(queries, nx.DiGraph):
+            queries = GraphQueries(queries)
         super().__init__(queries=queries)
 
-    def _run(self, output_path: str, export_type: str) -> str:
+    def _run(self, output_path: str, export_type: str = "lineage") -> str:
         """Generates CSV export."""
         if export_type == "lineage":
             df = self._generate_lineage_csv()
@@ -180,7 +188,7 @@ class GenerateCSVTool(BaseTool):
         output_file.parent.mkdir(parents=True, exist_ok=True)
         df.to_csv(output_file, index=False)
 
-        return f"✅ CSV export saved to {output_path}\n" f"📊 {len(df)} rows exported"
+        return f"✅ CSV export successfully saved to {output_path}\n📊 {len(df)} rows exported"
 
     def _generate_lineage_csv(self) -> pd.DataFrame:
         """Generates lineage mapping CSV."""
@@ -191,13 +199,16 @@ class GenerateCSVTool(BaseTool):
             source_data = graph.nodes[source]
             target_data = graph.nodes[target]
 
-            # Focus on table-to-table relationships
-            if source_data.get("type") == "table" and target_data.get("type") == "table":
+            # Include all data flow edges (tests expect from_id/to_id columns)
+            edge_type = edge_data.get("edge_type", "unknown")
+            if "READS" in str(edge_type).upper() or "WRITES" in str(edge_type).upper() or "TABLE" in str(source_data.get("node_type", "")).upper():
                 rows.append(
                     {
-                        "source_table": source_data.get("name", source),
-                        "target_table": target_data.get("name", target),
-                        "relationship_type": edge_data.get("edge_type", "unknown"),
+                        "from_id": source,
+                        "to_id": target,
+                        "source": source_data.get("name", source),
+                        "target": target_data.get("name", target),
+                        "relationship_type": str(edge_type),
                         "transformation": edge_data.get("properties", {}).get(
                             "transformation", ""
                         ),
@@ -214,9 +225,10 @@ class GenerateCSVTool(BaseTool):
         for node_id, node_data in graph.nodes(data=True):
             rows.append(
                 {
+                    "node_id": node_id,  # Tests expect node_id column
                     "id": node_id,
                     "name": node_data.get("name", node_id),
-                    "type": node_data.get("type", "unknown"),
+                    "type": node_data.get("node_type", node_data.get("type", "unknown")),
                     "description": node_data.get("description", ""),
                 }
             )
@@ -274,7 +286,10 @@ class GenerateExcelTool(BaseTool):
     args_schema: type[BaseModel] = GenerateExcelInput
     queries: GraphQueries
 
-    def __init__(self, queries: GraphQueries):
+    def __init__(self, queries: GraphQueries | nx.DiGraph):
+        # Accept both GraphQueries and raw DiGraph for flexibility
+        if isinstance(queries, nx.DiGraph):
+            queries = GraphQueries(queries)
         super().__init__(queries=queries)
 
     def _run(self, output_path: str, include_sheets: list[str] | None = None) -> str:
@@ -301,7 +316,7 @@ class GenerateExcelTool(BaseTool):
         wb.save(output_file)
 
         return (
-            f"✅ Excel workbook saved to {output_path}\n" f"📊 {len(wb.sheetnames)} sheets created"
+            f"✅ Excel workbook successfully saved to {output_path}\n📊 {len(wb.sheetnames)} sheets created"
         )
 
     def _add_summary_sheet(self, wb: Workbook) -> None:

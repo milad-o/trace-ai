@@ -1,6 +1,5 @@
-"""AI agents for enterprise document analysis."""
+"""TraceAI - Async-first AI agents for enterprise data analysis."""
 
-from traceai.agents.enterprise_agent import EnterpriseAgent, create_enterprise_agent
-from traceai.agents.async_enterprise_agent import AsyncEnterpriseAgent
+from traceai.agents.traceai import TraceAI
 
-__all__ = ["EnterpriseAgent", "create_enterprise_agent", "AsyncEnterpriseAgent"]
+__all__ = ["TraceAI"]

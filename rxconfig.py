@@ -3,7 +3,7 @@
 import reflex as rx
 
 config = rx.Config(
-    app_name="traceai.webui",
+    app_name="traceai_webui",
     db_url="sqlite:///./data/webui.db",
     env=rx.Env.DEV,
 )

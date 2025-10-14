@@ -11,6 +11,8 @@ from traceai.tools.graph_tools import (
     GraphQueryTool,
     ImpactAnalysisTool,
     LineageTracerTool,
+    PackageCatalogTool,
+    PackageSummaryTool,
     create_graph_tools,
 )
 
@@ -31,11 +33,13 @@ def test_create_graph_tools(sample_graph):
     """Test creating all graph tools."""
     tools = create_graph_tools(sample_graph)
 
-    assert len(tools) == 4
+    assert len(tools) == 6
     assert any(isinstance(tool, GraphQueryTool) for tool in tools)
     assert any(isinstance(tool, LineageTracerTool) for tool in tools)
     assert any(isinstance(tool, ImpactAnalysisTool) for tool in tools)
     assert any(isinstance(tool, DependencySearchTool) for tool in tools)
+    assert any(isinstance(tool, PackageCatalogTool) for tool in tools)
+    assert any(isinstance(tool, PackageSummaryTool) for tool in tools)
 
 
 def test_graph_query_tool_find_all_packages(sample_graph):
@@ -230,6 +234,27 @@ def test_dependency_search_tool_invalid_direction(sample_graph):
     assert "direction must be" in result
 
 
+def test_package_catalog_tool_lists_packages(sample_graph):
+    """Test PackageCatalogTool returns a catalog summary."""
+    tool = PackageCatalogTool(graph=sample_graph)
+
+    result = tool._run(limit=3)
+
+    assert "Package catalog" in result
+    assert "Summary:" in result
+
+
+def test_package_catalog_tool_filters(sample_graph):
+    """Test PackageCatalogTool filtering by name pattern."""
+    tool = PackageCatalogTool(graph=sample_graph)
+
+    result = tool._run(name_pattern="Customer", include_components=True, component_limit=2)
+
+    assert "Package catalog" in result
+    # Should either list Customer packages or indicate none found
+    assert "Customer" in result or "No packages found" in result
+
+
 def test_tool_descriptions_are_helpful():
     """Test that all tools have helpful descriptions."""
     from traceai.tools import (
@@ -237,6 +262,8 @@ def test_tool_descriptions_are_helpful():
         GraphQueryTool,
         ImpactAnalysisTool,
         LineageTracerTool,
+        PackageCatalogTool,
+        PackageSummaryTool,
     )
 
     # Create dummy graph for testing descriptions
@@ -249,6 +276,8 @@ def test_tool_descriptions_are_helpful():
         LineageTracerTool(graph=dummy_graph),
         ImpactAnalysisTool(graph=dummy_graph),
         DependencySearchTool(graph=dummy_graph),
+        PackageCatalogTool(graph=dummy_graph),
+        PackageSummaryTool(graph=dummy_graph),
     ]
 
     for tool in tools:
@@ -265,6 +294,7 @@ def test_tool_schemas_are_valid():
         GraphQueryInput,
         ImpactAnalysisInput,
         LineageTraceInput,
+        PackageCatalogInput,
     )
 
     # Test GraphQueryInput
@@ -287,3 +317,7 @@ def test_tool_schemas_are_valid():
     dep_input = DependencySearchInput(component_name="ETL Task", direction="both")
     assert dep_input.component_name == "ETL Task"
     assert dep_input.direction == "both"
+
+    catalog_input = PackageCatalogInput(document_type="cobol_program", limit=10)
+    assert catalog_input.document_type == "cobol_program"
+    assert catalog_input.limit == 10

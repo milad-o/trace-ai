@@ -64,6 +64,14 @@ class KnowledgeGraphBuilder:
             if len(parts) >= 2:
                 version_minor = int(parts[1]) if parts[1].isdigit() else None
 
+        doc_type_value = None
+        if metadata.document_type is not None:
+            doc_type_value = (
+                metadata.document_type.value
+                if hasattr(metadata.document_type, "value")
+                else str(metadata.document_type)
+            )
+
         document_attrs = PackageNode(
             id=document_id,
             name=metadata.name,
@@ -73,9 +81,17 @@ class KnowledgeGraphBuilder:
             creator_name=metadata.creator,
             creation_date=metadata.created_date,
             file_path=str(metadata.file_path) if metadata.file_path else None,
+            document_type=doc_type_value,
         )
 
-        self.graph.add_node(document_id, **document_attrs.__dict__)
+        node_attrs = document_attrs.__dict__.copy()
+
+        # Merge any custom metadata attributes (without overwriting core fields)
+        if metadata.custom_attributes:
+            for key, value in metadata.custom_attributes.items():
+                node_attrs.setdefault(key, value)
+
+        self.graph.add_node(document_id, **node_attrs)
 
         # Add data sources (connections, files, etc.)
         # Create ID map for dependencies (includes both components and data sources)
@@ -138,7 +154,7 @@ class KnowledgeGraphBuilder:
                 self.graph.add_edge(from_node_id, to_node_id, **edge_attrs.__dict__)
 
         logger.info(
-            f"Added document '{metadata.name}' ({metadata.document_type}) to graph: "
+            f"Added document '{metadata.name}' ({doc_type_value or metadata.document_type}) to graph: "
             f"{len(parsed_document.data_sources)} data sources, "
             f"{len(parsed_document.parameters)} parameters, "
             f"{len(parsed_document.components)} components, "

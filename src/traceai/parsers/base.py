@@ -105,6 +105,16 @@ class Dependency:
     expression: Optional[str] = None
     properties: dict[str, Any] = field(default_factory=dict)
 
+    @property
+    def from_component(self) -> str:
+        """Alias for backward compatibility with older dependency schema."""
+        return self.from_id
+
+    @property
+    def to_component(self) -> str:
+        """Alias for backward compatibility with older dependency schema."""
+        return self.to_id
+
 
 @dataclass
 class ParsedDocument:
@@ -215,7 +225,7 @@ class ParserRegistry:
             raise ValueError(f"No parser registered for {document_type}")
         return self._parsers[document_type]
 
-    def get_parser_for_file(self, file_path: Path) -> BaseParser:
+    def get_parser_for_file(self, file_path: Path) -> BaseParser | None:
         """
         Get appropriate parser for a file based on extension.
 
@@ -224,9 +234,6 @@ class ParserRegistry:
 
         Returns:
             Parser instance
-
-        Raises:
-            ValueError: If no parser can handle the file
         """
         extension = file_path.suffix.lower()
 
@@ -234,7 +241,7 @@ class ParserRegistry:
             if extension in parser.supported_extensions:
                 return parser
 
-        raise ValueError(f"No parser available for extension: {extension}")
+        return None
 
     def list_supported_formats(self) -> dict[str, list[str]]:
         """

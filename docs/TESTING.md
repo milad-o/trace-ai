@@ -6,8 +6,8 @@ Comprehensive testing suite for TraceAI covering all APIs, parsers, tools, and p
 
 ```
 tests/
-├── test_enterprise_agent.py          # Sync agent API tests (21 tests)
-├── test_async_enterprise_agent.py    # Async agent API tests (20 tests)
+├── test_traceai_agent.py             # Sync agent API tests (21 tests)
+├── test_async_traceai_agent.py       # Async agent API tests (20 tests)
 ├── test_all_parsers.py               # All parser tests (30 tests)
 ├── test_code_generation.py           # Code generation tools (15 tests)
 ├── test_ai_integration.py            # AI-enabled integration tests (20 tests)
@@ -35,8 +35,8 @@ Run tests that don't need AI:
 uv run pytest tests/ -v --no-cov -m "not slow" -k "not ai_integration"
 
 # Run specific test suites
-uv run pytest tests/test_enterprise_agent.py -v
-uv run pytest tests/test_async_enterprise_agent.py -v
+uv run pytest tests/test_traceai_agent.py -v
+uv run pytest tests/test_async_traceai_agent.py -v
 uv run pytest tests/test_all_parsers.py -v
 uv run pytest tests/test_code_generation.py -v
 ```
@@ -82,7 +82,7 @@ uv run pytest --cov=traceai --cov-report=html
 
 ### 1. API Tests
 
-**Sync Agent Tests** (`test_enterprise_agent.py`):
+**Sync Agent Tests** (`test_traceai_agent.py`):
 - Agent initialization (with/without API key)
 - Document loading (single/multiple formats)
 - Graph statistics and queries
@@ -92,7 +92,7 @@ uv run pytest --cov=traceai --cov-report=html
 - Middleware configuration
 - Incremental loading
 
-**Async Agent Tests** (`test_async_enterprise_agent.py`):
+**Async Agent Tests** (`test_async_traceai_agent.py`):
 - Async initialization
 - Concurrent document loading
 - Streaming responses
@@ -192,7 +192,7 @@ import pytest
 from pathlib import Path
 import tempfile
 
-from traceai.agents import EnterpriseAgent
+from traceai.agents import TraceAI
 
 @pytest.fixture
 def temp_persist_dir():
@@ -202,7 +202,7 @@ def temp_persist_dir():
 
 def test_my_feature(temp_persist_dir):
     """Test description."""
-    agent = EnterpriseAgent(persist_dir=temp_persist_dir)
+  agent = TraceAI(persist_dir=temp_persist_dir)
 
     # Test logic here
     assert True
@@ -212,12 +212,12 @@ def test_my_feature(temp_persist_dir):
 
 ```python
 import pytest
-from traceai.agents import AsyncEnterpriseAgent
+from traceai.agents import TraceAI
 
 @pytest.mark.asyncio
 async def test_async_feature():
     """Test async feature."""
-    agent = AsyncEnterpriseAgent()
+  agent = TraceAI()
     await agent.load_documents("path/to/docs")
 
     assert agent.graph is not None

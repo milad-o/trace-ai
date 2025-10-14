@@ -84,7 +84,7 @@ class COBOLParser(BaseParser):
             document_id=program_id or file_path.stem,
             name=program_id or file_path.stem,
             document_type=DocumentType.COBOL_PROGRAM,
-            file_path=str(file_path),
+            file_path=file_path,
             description=f"COBOL program: {program_id}" + (f" by {author}" if author else ""),
         )
 

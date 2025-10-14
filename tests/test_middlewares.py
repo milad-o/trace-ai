@@ -160,31 +160,71 @@ class TestProgressTrackingMiddleware:
         """Test middleware can be initialized."""
         middleware = ProgressTrackingMiddleware(show_progress=True)
         assert middleware.show_progress is True
-        assert middleware.current_step == 0
-        assert middleware.total_steps == 0
+        # Refactored version no longer has current_step/total_steps attributes
+        assert hasattr(middleware, '_last_completed_count')
+        assert hasattr(middleware, '_last_total_count')
+        assert hasattr(middleware, '_plan_announced')
 
-    def test_progress_metadata(self):
-        """Test that progress metadata is returned."""
+    def test_progress_metadata_without_plan(self):
+        """Test that progress metadata is returned when no plan exists."""
         middleware = ProgressTrackingMiddleware()
 
-        state = {"messages": []}
+        state = {"messages": [], "files": {}}
 
         result = middleware.after_model(state)
 
         assert result is not None
         assert "progress_metadata" in result
-        assert "current_step" in result["progress_metadata"]
-        assert "total_steps" in result["progress_metadata"]
-        assert "progress_percentage" in result["progress_metadata"]
+        assert result["progress_metadata"]["has_plan"] is False
+        assert result["progress_metadata"]["completed"] == 0
+        assert result["progress_metadata"]["total"] == 0
+        assert result["progress_metadata"]["progress_percentage"] == 0
+
+    def test_progress_metadata_with_plan(self):
+        """Test that progress metadata is returned when plan exists."""
+        import json
+        middleware = ProgressTrackingMiddleware()
+
+        # Simulate DeepAgents' todos.json with some todos
+        todos = [
+            {"content": "Step 1", "status": "completed"},
+            {"content": "Step 2", "status": "in-progress"},
+            {"content": "Step 3", "status": "not-started"},
+        ]
+
+        state = {
+            "messages": [],
+            "files": {"todos.json": json.dumps(todos)}
+        }
+
+        result = middleware.after_model(state)
+
+        assert result is not None
+        assert "progress_metadata" in result
+        assert result["progress_metadata"]["has_plan"] is True
+        assert result["progress_metadata"]["completed"] == 1
+        assert result["progress_metadata"]["total"] == 3
+        assert result["progress_metadata"]["progress_percentage"] == 33.33333333333333
+        assert result["progress_metadata"]["in_progress"] == "Step 2"
 
     def test_progress_percentage_calculation(self):
         """Test progress percentage calculation."""
+        import json
         middleware = ProgressTrackingMiddleware()
-        middleware.total_steps = 10
-        middleware.current_step = 5
 
-        state = {"messages": []}
+        # 5 out of 10 todos completed
+        todos = [
+            {"content": f"Step {i}", "status": "completed" if i <= 5 else "not-started"}
+            for i in range(1, 11)
+        ]
+
+        state = {
+            "messages": [],
+            "files": {"todos.json": json.dumps(todos)}
+        }
 
         result = middleware.after_model(state)
 
         assert result["progress_metadata"]["progress_percentage"] == 50.0
+        assert result["progress_metadata"]["completed"] == 5
+        assert result["progress_metadata"]["total"] == 10

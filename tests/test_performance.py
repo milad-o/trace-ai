@@ -1,4 +1,4 @@
-"""Performance benchmarks for sync vs async agents."""
+"""Performance benchmarks for sequential vs concurrent TraceAI workflows."""
 
 import asyncio
 import tempfile
@@ -7,7 +7,21 @@ from pathlib import Path
 
 import pytest
 
-from traceai.agents import EnterpriseAgent, AsyncEnterpriseAgent
+from traceai.agents import TraceAI
+
+
+# Try to import pytest-benchmark
+try:
+    import pytest_benchmark
+    HAS_BENCHMARK = True
+except ImportError:
+    HAS_BENCHMARK = False
+
+# Skip benchmark tests if pytest-benchmark not installed
+benchmark_required = pytest.mark.skipif(
+    not HAS_BENCHMARK,
+    reason="pytest-benchmark not installed"
+)
 
 
 @pytest.fixture
@@ -40,15 +54,16 @@ def sample_jcl_dir():
     return Path(__file__).parent.parent / "examples" / "inputs" / "jcl"
 
 
-class TestSyncPerformance:
-    """Benchmark sync agent performance."""
+@benchmark_required
+class TestSequentialPerformance:
+    """Benchmark sequential TraceAI performance."""
 
     def test_sync_load_single_directory(self, sample_ssis_dir, benchmark):
         """Benchmark loading a single directory (sync)."""
         def load_ssis():
             with tempfile.TemporaryDirectory() as temp_dir:
-                agent = EnterpriseAgent(persist_dir=temp_dir)
-                agent.load_documents(sample_ssis_dir)
+                agent = TraceAI(persist_dir=temp_dir)
+                asyncio.run(agent.load_documents(sample_ssis_dir))
                 return agent
 
         result = benchmark(load_ssis)
@@ -64,10 +79,10 @@ class TestSyncPerformance:
         """Benchmark loading multiple directories sequentially (sync)."""
         def load_all():
             with tempfile.TemporaryDirectory() as temp_dir:
-                agent = EnterpriseAgent(persist_dir=temp_dir)
-                agent.load_documents(sample_ssis_dir)
-                agent.load_documents(sample_json_dir, pattern="*.json")
-                agent.load_documents(sample_csv_dir, pattern="*.csv")
+                agent = TraceAI(persist_dir=temp_dir)
+                asyncio.run(agent.load_documents(sample_ssis_dir))
+                asyncio.run(agent.load_documents(sample_json_dir, pattern="*.json"))
+                asyncio.run(agent.load_documents(sample_csv_dir, pattern="*.csv"))
                 return agent
 
         result = benchmark(load_all)
@@ -76,8 +91,8 @@ class TestSyncPerformance:
     def test_sync_graph_queries(self, sample_ssis_dir, benchmark):
         """Benchmark graph queries (sync)."""
         with tempfile.TemporaryDirectory() as temp_dir:
-            agent = EnterpriseAgent(persist_dir=temp_dir)
-            agent.load_documents(sample_ssis_dir)
+            agent = TraceAI(persist_dir=temp_dir)
+            asyncio.run(agent.load_documents(sample_ssis_dir))
 
             from traceai.graph.queries import GraphQueries
             queries = GraphQueries(agent.graph)
@@ -91,15 +106,16 @@ class TestSyncPerformance:
             benchmark(run_queries)
 
 
+@benchmark_required
 @pytest.mark.asyncio
-class TestAsyncPerformance:
-    """Benchmark async agent performance."""
+class TestConcurrentPerformance:
+    """Benchmark concurrent TraceAI performance."""
 
     async def test_async_load_single_directory(self, sample_ssis_dir, benchmark):
         """Benchmark loading a single directory (async)."""
         async def load_ssis():
             with tempfile.TemporaryDirectory() as temp_dir:
-                agent = AsyncEnterpriseAgent(persist_dir=temp_dir)
+                agent = TraceAI(persist_dir=temp_dir)
                 await agent.load_documents(sample_ssis_dir)
                 return agent
 
@@ -116,7 +132,7 @@ class TestAsyncPerformance:
         """Benchmark loading multiple directories concurrently (async)."""
         async def load_all():
             with tempfile.TemporaryDirectory() as temp_dir:
-                agent = AsyncEnterpriseAgent(persist_dir=temp_dir, max_concurrent_parsers=20)
+                agent = TraceAI(persist_dir=temp_dir, max_concurrent_parsers=20)
                 await asyncio.gather(
                     agent.load_documents(sample_ssis_dir),
                     agent.load_documents(sample_json_dir, pattern="*.json"),
@@ -129,22 +145,22 @@ class TestAsyncPerformance:
 
 
 class TestPerformanceComparison:
-    """Direct comparison of sync vs async performance."""
+    """Direct comparison of sequential vs concurrent execution."""
 
     def test_compare_single_directory_load(self, sample_ssis_dir):
         """Compare sync vs async for single directory."""
         # Sync
         with tempfile.TemporaryDirectory() as temp_dir:
             start = time.time()
-            agent_sync = EnterpriseAgent(persist_dir=temp_dir)
-            agent_sync.load_documents(sample_ssis_dir)
+            agent_sync = TraceAI(persist_dir=temp_dir)
+            asyncio.run(agent_sync.load_documents(sample_ssis_dir))
             sync_time = time.time() - start
 
         # Async
         async def async_load():
             with tempfile.TemporaryDirectory() as temp_dir:
                 start = time.time()
-                agent_async = AsyncEnterpriseAgent(persist_dir=temp_dir)
+                agent_async = TraceAI(persist_dir=temp_dir)
                 await agent_async.load_documents(sample_ssis_dir)
                 return time.time() - start
 
@@ -170,10 +186,10 @@ class TestPerformanceComparison:
         # Sync (sequential)
         with tempfile.TemporaryDirectory() as temp_dir:
             start = time.time()
-            agent_sync = EnterpriseAgent(persist_dir=temp_dir)
-            agent_sync.load_documents(sample_ssis_dir)
-            agent_sync.load_documents(sample_json_dir, pattern="*.json")
-            agent_sync.load_documents(sample_csv_dir, pattern="*.csv")
+            agent_sync = TraceAI(persist_dir=temp_dir)
+            asyncio.run(agent_sync.load_documents(sample_ssis_dir))
+            asyncio.run(agent_sync.load_documents(sample_json_dir, pattern="*.json"))
+            asyncio.run(agent_sync.load_documents(sample_csv_dir, pattern="*.csv"))
             sync_time = time.time() - start
             sync_count = len(agent_sync.parsed_documents)
 
@@ -181,7 +197,7 @@ class TestPerformanceComparison:
         async def async_load():
             with tempfile.TemporaryDirectory() as temp_dir:
                 start = time.time()
-                agent_async = AsyncEnterpriseAgent(
+                agent_async = TraceAI(
                     persist_dir=temp_dir,
                     max_concurrent_parsers=20
                 )
@@ -220,9 +236,9 @@ class TestPerformanceComparison:
         # Sync
         with tempfile.TemporaryDirectory() as temp_dir:
             start = time.time()
-            agent_sync = EnterpriseAgent(persist_dir=temp_dir)
-            agent_sync.load_documents(sample_cobol_dir, pattern="*.cbl")
-            agent_sync.load_documents(sample_jcl_dir, pattern="*.jcl")
+            agent_sync = TraceAI(persist_dir=temp_dir)
+            asyncio.run(agent_sync.load_documents(sample_cobol_dir, pattern="*.cbl"))
+            asyncio.run(agent_sync.load_documents(sample_jcl_dir, pattern="*.jcl"))
             sync_time = time.time() - start
             sync_count = len(agent_sync.parsed_documents)
 
@@ -230,7 +246,7 @@ class TestPerformanceComparison:
         async def async_load():
             with tempfile.TemporaryDirectory() as temp_dir:
                 start = time.time()
-                agent_async = AsyncEnterpriseAgent(
+                agent_async = TraceAI(
                     persist_dir=temp_dir,
                     max_concurrent_parsers=20
                 )
@@ -264,8 +280,8 @@ class TestMemoryUsage:
         import gc
 
         with tempfile.TemporaryDirectory() as temp_dir:
-            agent = EnterpriseAgent(persist_dir=temp_dir)
-            agent.load_documents(sample_ssis_dir)
+            agent = TraceAI(persist_dir=temp_dir)
+            asyncio.run(agent.load_documents(sample_ssis_dir))
 
             # Delete agent
             del agent
@@ -280,7 +296,7 @@ class TestMemoryUsage:
         import gc
 
         with tempfile.TemporaryDirectory() as temp_dir:
-            agent = AsyncEnterpriseAgent(persist_dir=temp_dir)
+            agent = TraceAI(persist_dir=temp_dir)
             await agent.load_documents(sample_ssis_dir)
 
             # Delete agent
@@ -309,7 +325,7 @@ class TestConcurrencyLimits:
         for max_concurrent in [1, 5, 10, 20]:
             with tempfile.TemporaryDirectory() as temp_dir:
                 start = time.time()
-                agent = AsyncEnterpriseAgent(
+                agent = TraceAI(
                     persist_dir=temp_dir,
                     max_concurrent_parsers=max_concurrent
                 )

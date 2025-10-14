@@ -9,7 +9,7 @@ from pathlib import Path
 
 import reflex as rx
 
-from traceai.agents import AsyncEnterpriseAgent
+from traceai.agents import TraceAI
 from traceai.graph.queries import GraphQueries
 
 
@@ -34,6 +34,22 @@ class Message(rx.Base):
     tool_calls: list[dict] = []
 
 
+# Global agent instance (not stored in State due to serialization)
+_agent: TraceAI | None = None
+
+
+def get_agent() -> TraceAI:
+    """Get or create the global agent instance."""
+    global _agent
+    if _agent is None:
+        _agent = TraceAI(
+            model_provider="anthropic",
+            persist_dir="./data",
+            max_concurrent_parsers=20
+        )
+    return _agent
+
+
 class State(rx.State):
     """Application state."""
 
@@ -43,7 +59,7 @@ class State(rx.State):
     is_processing: bool = False
 
     # Agent state
-    agent: AsyncEnterpriseAgent | None = None
+    agent_initialized: bool = False
     documents_loaded: int = 0
     graph_nodes: int = 0
     graph_edges: int = 0
@@ -52,7 +68,6 @@ class State(rx.State):
     total_queries: int = 0
     total_tokens: int = 0
     avg_response_time: float = 0.0
-    tool_usage: dict[str, int] = {}
 
     # Settings
     model_provider: str = "anthropic"
@@ -64,28 +79,24 @@ class State(rx.State):
 
     async def initialize_agent(self):
         """Initialize the TraceAI agent."""
-        if not self.agent:
-            self.agent = AsyncEnterpriseAgent(
-                model_provider=self.model_provider,
-                model_name=self.model_name,
-                persist_dir="./data",
-                max_concurrent_parsers=self.max_concurrent
-            )
+        agent = get_agent()
+        self.agent_initialized = True
 
     async def load_sample_data(self):
         """Load sample data for demo."""
         await self.initialize_agent()
+        agent = get_agent()
 
         # Load sample documents
         ssis_dir = Path("examples/inputs/ssis")
         if ssis_dir.exists():
-            await self.agent.load_documents(ssis_dir)
+            await agent.load_documents(ssis_dir)
 
             # Update stats
-            if self.agent.graph:
-                self.graph_nodes = self.agent.graph.number_of_nodes()
-                self.graph_edges = self.agent.graph.number_of_edges()
-                self.documents_loaded = len(self.agent.parsed_documents)
+            if agent.graph:
+                self.graph_nodes = agent.graph.number_of_nodes()
+                self.graph_edges = agent.graph.number_of_edges()
+                self.documents_loaded = len(agent.parsed_documents)
 
         return rx.toast.success("Sample data loaded successfully!")
 
@@ -107,9 +118,10 @@ class State(rx.State):
 
         # Initialize agent if needed
         await self.initialize_agent()
+        agent = get_agent()
 
         # Check if agent has data
-        if not self.agent or not self.agent.graph:
+        if not agent or not agent.graph:
             assistant_msg = Message(
                 role="assistant",
                 content="No documents loaded yet. Please load some data first using the 'Load Sample Data' button or upload your own files."
@@ -149,7 +161,8 @@ class State(rx.State):
 
     async def _handle_query(self, query: str) -> str:
         """Handle a query using graph queries or AI."""
-        queries = GraphQueries(self.agent.graph)
+        agent = get_agent()
+        queries = GraphQueries(agent.graph)
 
         # Simple keyword matching for demo
         query_lower = query.lower()
@@ -186,8 +199,8 @@ class State(rx.State):
 
         else:
             # If AI agent available, use it
-            if self.agent.agent:
-                response = await self.agent.query(query)
+            if agent.agent:
+                response = await agent.query(query)
                 return response
             else:
                 return """I can help you with:
@@ -204,7 +217,8 @@ For AI-powered queries, please set your API key in the settings."""
 
     def get_graph_stats_dict(self) -> dict:
         """Get graph statistics for dashboard."""
-        if not self.agent or not self.agent.graph:
+        agent = get_agent()
+        if not agent or not agent.graph:
             return {
                 "total_nodes": 0,
                 "total_edges": 0,
@@ -212,7 +226,7 @@ For AI-powered queries, please set your API key in the settings."""
                 "components": 0
             }
 
-        queries = GraphQueries(self.agent.graph)
+        queries = GraphQueries(agent.graph)
         return queries.get_graph_stats()
 
 
@@ -285,11 +299,6 @@ def chat_panel() -> rx.Component:
                 placeholder="Ask about your data...",
                 value=State.current_input,
                 on_change=State.set_input,
-                on_key_down=lambda key: rx.cond(
-                    key == "Enter",
-                    State.send_message,
-                    rx.noop,
-                ),
                 size="3",
                 flex="1",
             ),
@@ -382,14 +391,14 @@ def index() -> rx.Component:
             rx.heading("🔍 TraceAI", size="7", color=THEME["primary"]),
             rx.spacer(),
             rx.badge(
-                f"Model: {State.model_provider}",
+                State.model_provider,
                 size="2",
                 color_scheme="purple",
             ),
             rx.badge(
-                "Async Mode" if State.max_concurrent > 1 else "Sync Mode",
+                "Async Mode",
                 size="2",
-                color_scheme="green" if State.max_concurrent > 1 else "gray",
+                color_scheme="green",
             ),
             padding="16px",
             border_bottom=f"2px solid {THEME['primary']}",

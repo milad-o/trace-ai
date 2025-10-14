@@ -62,10 +62,10 @@ The app uses Reflex's state management:
 
 ```python
 class State(rx.State):
-    messages: list[Message]      # Chat history
-    agent: AsyncEnterpriseAgent  # TraceAI agent
-    graph_nodes: int             # Graph statistics
-    total_queries: int           # Observability metrics
+    messages: list[Message]  # Chat history
+    agent: TraceAI           # Async TraceAI agent
+    graph_nodes: int         # Graph statistics
+    total_queries: int       # Observability metrics
 ```
 
 ## Components

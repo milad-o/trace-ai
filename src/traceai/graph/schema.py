@@ -55,6 +55,7 @@ class PackageNode:
     creator_name: str | None = None
     creation_date: str | None = None
     file_path: str | None = None
+    document_type: str | None = None
 
 
 @dataclass

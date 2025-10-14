@@ -92,7 +92,7 @@ class JCLParser(BaseParser):
             document_id=job_name or file_path.stem,
             name=job_name or file_path.stem,
             document_type=DocumentType.MAINFRAME_JCL,
-            file_path=str(file_path),
+            file_path=file_path,
             description=f"JCL batch job: {job_name or file_path.stem}",
         )
 
